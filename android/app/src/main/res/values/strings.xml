@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WalletRoast</string>
+    <string name="title_activity_main">WalletRoast</string>
+    <string name="package_name">com.walletroast.app</string>
+    <string name="custom_url_scheme">com.walletroast.app</string>
+</resources>
