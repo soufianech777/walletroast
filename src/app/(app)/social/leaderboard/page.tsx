@@ -116,35 +116,35 @@ export default function LeaderboardPage() {
 
       {/* Podium — Top 3 */}
       {leaderboard.length >= 3 && (
-        <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3 sm:gap-4">
+        <motion.div variants={fadeUp} className="grid grid-cols-3 gap-2 sm:gap-4">
           {/* 2nd Place */}
-          <div className="podium-silver rounded-2xl p-4 sm:p-5 text-center flex flex-col items-center pt-8">
-            <div className="text-2xl mb-2">🥈</div>
-            <Avatar name={leaderboard[1].username} gradient={leaderboard[1].avatarGradient} anonymous={leaderboard[1].isAnonymous} size="lg" isPro={leaderboard[1].userId === user.id} photoUrl={leaderboard[1].userId === user.id ? user.profilePhoto : undefined} />
-            <p className="font-bold text-[13px] mt-3 truncate w-full">{leaderboard[1].isAnonymous ? "Anonymous" : leaderboard[1].username}</p>
-            <p className="text-[18px] font-black mt-1">{getStatForCategory(leaderboard[1], activeTab)}</p>
-            <p className="text-[11px] text-[var(--color-muted-foreground)] mt-1">2nd Place</p>
+          <div className="podium-silver rounded-xl sm:rounded-2xl p-2.5 sm:p-5 text-center flex flex-col items-center pt-6 sm:pt-8">
+            <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🥈</div>
+            <Avatar name={leaderboard[1].username} gradient={leaderboard[1].avatarGradient} anonymous={leaderboard[1].isAnonymous} size="md" isPro={leaderboard[1].userId === user.id} photoUrl={leaderboard[1].userId === user.id ? user.profilePhoto : undefined} />
+            <p className="font-bold text-[11px] sm:text-[13px] mt-2 sm:mt-3 truncate w-full">{leaderboard[1].isAnonymous ? "Anonymous" : leaderboard[1].username}</p>
+            <p className="text-[14px] sm:text-[18px] font-black mt-0.5 sm:mt-1">{getStatForCategory(leaderboard[1], activeTab)}</p>
+            <p className="text-[9px] sm:text-[11px] text-[var(--color-muted-foreground)] mt-0.5 sm:mt-1">2nd Place</p>
           </div>
 
           {/* 1st Place */}
-          <div className="podium-gold rounded-2xl p-4 sm:p-5 text-center flex flex-col items-center -mt-4 relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <Crown className="w-8 h-8 text-yellow-400 drop-shadow-lg" />
+          <div className="podium-gold rounded-xl sm:rounded-2xl p-2.5 sm:p-5 text-center flex flex-col items-center -mt-2 sm:-mt-4 relative">
+            <div className="absolute -top-2 sm:-top-3 left-1/2 -translate-x-1/2">
+              <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400 drop-shadow-lg" />
             </div>
-            <div className="text-3xl mb-2 mt-4">🥇</div>
-            <Avatar name={leaderboard[0].username} gradient={leaderboard[0].avatarGradient} anonymous={leaderboard[0].isAnonymous} size="xl" isPro={leaderboard[0].userId === user.id} photoUrl={leaderboard[0].userId === user.id ? user.profilePhoto : undefined} />
-            <p className="font-bold text-[14px] mt-3 truncate w-full">{leaderboard[0].isAnonymous ? "Anonymous" : leaderboard[0].username}</p>
-            <p className="text-[22px] font-black mt-1 gradient-text">{getStatForCategory(leaderboard[0], activeTab)}</p>
-            <p className="text-[11px] text-amber-400 font-bold mt-1">🏆 Champion</p>
+            <div className="text-2xl sm:text-3xl mb-1.5 sm:mb-2 mt-3 sm:mt-4">🥇</div>
+            <Avatar name={leaderboard[0].username} gradient={leaderboard[0].avatarGradient} anonymous={leaderboard[0].isAnonymous} size="lg" isPro={leaderboard[0].userId === user.id} photoUrl={leaderboard[0].userId === user.id ? user.profilePhoto : undefined} />
+            <p className="font-bold text-[12px] sm:text-[14px] mt-2 sm:mt-3 truncate w-full">{leaderboard[0].isAnonymous ? "Anonymous" : leaderboard[0].username}</p>
+            <p className="text-[16px] sm:text-[22px] font-black mt-0.5 sm:mt-1 gradient-text">{getStatForCategory(leaderboard[0], activeTab)}</p>
+            <p className="text-[9px] sm:text-[11px] text-amber-400 font-bold mt-0.5 sm:mt-1">🏆 Champion</p>
           </div>
 
           {/* 3rd Place */}
-          <div className="podium-bronze rounded-2xl p-4 sm:p-5 text-center flex flex-col items-center pt-8">
-            <div className="text-2xl mb-2">🥉</div>
-            <Avatar name={leaderboard[2].username} gradient={leaderboard[2].avatarGradient} anonymous={leaderboard[2].isAnonymous} size="lg" isPro={leaderboard[2].userId === user.id} photoUrl={leaderboard[2].userId === user.id ? user.profilePhoto : undefined} />
-            <p className="font-bold text-[13px] mt-3 truncate w-full">{leaderboard[2].isAnonymous ? "Anonymous" : leaderboard[2].username}</p>
-            <p className="text-[18px] font-black mt-1">{getStatForCategory(leaderboard[2], activeTab)}</p>
-            <p className="text-[11px] text-[var(--color-muted-foreground)] mt-1">3rd Place</p>
+          <div className="podium-bronze rounded-xl sm:rounded-2xl p-2.5 sm:p-5 text-center flex flex-col items-center pt-6 sm:pt-8">
+            <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🥉</div>
+            <Avatar name={leaderboard[2].username} gradient={leaderboard[2].avatarGradient} anonymous={leaderboard[2].isAnonymous} size="md" isPro={leaderboard[2].userId === user.id} photoUrl={leaderboard[2].userId === user.id ? user.profilePhoto : undefined} />
+            <p className="font-bold text-[11px] sm:text-[13px] mt-2 sm:mt-3 truncate w-full">{leaderboard[2].isAnonymous ? "Anonymous" : leaderboard[2].username}</p>
+            <p className="text-[14px] sm:text-[18px] font-black mt-0.5 sm:mt-1">{getStatForCategory(leaderboard[2], activeTab)}</p>
+            <p className="text-[9px] sm:text-[11px] text-[var(--color-muted-foreground)] mt-0.5 sm:mt-1">3rd Place</p>
           </div>
         </motion.div>
       )}

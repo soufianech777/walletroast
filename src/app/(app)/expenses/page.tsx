@@ -194,7 +194,7 @@ export default function ExpensesPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-[13px] font-bold">{formatCurrency(expense.amount, user?.currency)}</span>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                     <button onClick={() => handleEdit(expense)} className="p-1.5 rounded-lg hover:bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-all">
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>

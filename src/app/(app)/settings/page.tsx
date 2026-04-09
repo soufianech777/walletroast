@@ -438,14 +438,15 @@ export default function SettingsPage() {
 
       {/* Tab Navigation */}
       <motion.div variants={fadeUp}>
-        <div className="flex gap-1 p-1 bg-[var(--color-secondary)] rounded-xl">
+        <div className="flex gap-1 p-1 bg-[var(--color-secondary)] rounded-xl overflow-x-auto">
           {tabs.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg text-[12px] sm:text-[13px] font-semibold transition-all duration-200 whitespace-nowrap ${
                 activeTab === tab.id ? "bg-[var(--color-card)] text-orange-400 shadow-sm" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
               }`}>
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
+              <tab.icon className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden text-[11px]">{tab.label.slice(0, 4)}</span>
               {tab.id === "security" && twoFactorEnabled && <span className="w-2 h-2 rounded-full bg-green-400" />}
             </button>
           ))}
@@ -988,7 +989,7 @@ export default function SettingsPage() {
               <p className="text-[12px] text-[var(--color-muted-foreground)] mb-5 ml-[38px]">
                 Get a summary of your notifications delivered to your inbox.
               </p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 {([
                   { value: "off", emoji: "🚫", label: "Off", desc: "No emails" },
                   { value: "daily", emoji: "📅", label: "Daily", desc: "Every morning" },

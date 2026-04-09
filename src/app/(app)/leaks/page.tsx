@@ -141,7 +141,7 @@ function LeakCard({ leak, currency, index }: { leak: MoneyLeak; currency: string
             className="overflow-hidden"
           >
             <div className="px-5 sm:px-6 pb-5 sm:pb-6 border-t border-[var(--color-border)]/50 pt-4">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="stat-card text-center py-3">
                   <p className="text-[10px] text-[var(--color-muted-foreground)] uppercase tracking-wider mb-1">Type</p>
                   <p className="text-[12px] font-semibold capitalize">{leak.type.replace(/_/g, " ")}</p>

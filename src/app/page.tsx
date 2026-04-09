@@ -612,9 +612,9 @@ export default function LandingPage() {
             <span className={`text-xs ml-1 ${theme === "dark" ? "text-zinc-600" : "text-gray-400"}`}>© 2024</span>
           </div>
           <div className={`flex items-center gap-7 text-xs ${theme === "dark" ? "text-zinc-500" : "text-gray-500"}`}>
-            <a href="#" className={`transition-colors ${theme === "dark" ? "hover:text-zinc-300" : "hover:text-gray-900"}`}>Privacy</a>
-            <a href="#" className={`transition-colors ${theme === "dark" ? "hover:text-zinc-300" : "hover:text-gray-900"}`}>Terms</a>
-            <a href="#" className={`transition-colors ${theme === "dark" ? "hover:text-zinc-300" : "hover:text-gray-900"}`}>Support</a>
+            <Link href="/privacy" className={`transition-colors ${theme === "dark" ? "hover:text-zinc-300" : "hover:text-gray-900"}`}>Privacy</Link>
+            <Link href="/terms" className={`transition-colors ${theme === "dark" ? "hover:text-zinc-300" : "hover:text-gray-900"}`}>Terms</Link>
+            <a href="mailto:support@walletroast.com" className={`transition-colors ${theme === "dark" ? "hover:text-zinc-300" : "hover:text-gray-900"}`}>Support</a>
           </div>
         </div>
       </footer>

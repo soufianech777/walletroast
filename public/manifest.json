@@ -1,14 +1,20 @@
 {
-  "name": "WalletRoast",
+  "name": "WalletRoast — Stop Being Broke. Start Being Honest.",
   "short_name": "WalletRoast",
-  "description": "The personal finance app that tells you exactly what's wrong with your money.",
-  "start_url": "/",
+  "description": "The brutally honest personal finance app. Track expenses, get roasted for bad spending habits, and actually fix your money. Discipline score, budget control, smart goals, and social leaderboards.",
+  "start_url": "/?source=pwa",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#0a0a0c",
   "theme_color": "#f97316",
   "orientation": "portrait-primary",
   "scope": "/",
-  "categories": ["finance", "lifestyle"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["finance", "lifestyle", "productivity", "utilities"],
+  "iarc_rating_id": "",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -21,6 +27,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "screenshots": [],
@@ -28,20 +40,34 @@
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
-      "url": "/dashboard",
+      "description": "View your financial overview",
+      "url": "/dashboard?source=shortcut",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Add Expense",
       "short_name": "Expense",
-      "url": "/expenses",
+      "description": "Log a new expense quickly",
+      "url": "/expenses?source=shortcut",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Daily Roast",
       "short_name": "Roast",
-      "url": "/daily-roast",
+      "description": "Get your daily financial roast",
+      "url": "/daily-roast?source=shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Roast Social",
+      "short_name": "Social",
+      "description": "See community roasts and leaderboard",
+      "url": "/social?source=shortcut",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "related_applications": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }

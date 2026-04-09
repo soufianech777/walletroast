@@ -504,7 +504,7 @@ function CreatePostModal({
         {/* ─── Roast Level ─── */}
         <div className="mb-4">
           <label className="text-[12px] font-semibold text-[var(--color-muted-foreground)] uppercase tracking-[0.1em] mb-2 block">Roast Level</label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
             {(["soft", "direct", "brutal"] as const).map(level => (
               <button key={level} onClick={() => setRoastLevel(level)}
                 className={`px-3 py-2.5 rounded-xl text-[13px] font-semibold border transition-all ${roastLevel === level
@@ -724,7 +724,7 @@ export default function SocialPage() {
       </motion.div>
 
       {/* ─── Quick Stats ─── */}
-      <motion.div variants={fadeUp} className="grid grid-cols-3 gap-4">
+      <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="stat-card text-center">
           <p className="text-[11px] text-[var(--color-muted-foreground)] uppercase tracking-[0.15em] font-semibold mb-2">Total Roasts</p>
           <p className="text-[1.5rem] font-bold">{posts.length}</p>
