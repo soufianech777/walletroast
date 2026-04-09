@@ -92,6 +92,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("walletroast_theme") as "dark" | "light" | null
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved) setTheme(saved)
   }, [])
 

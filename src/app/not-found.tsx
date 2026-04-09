@@ -2,12 +2,12 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Flame, Home, ArrowLeft, Search } from "lucide-react"
+import { Flame, Home, ArrowLeft } from "lucide-react"
 import { useState, useEffect } from "react"
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const } },
 }
 
 const stagger = {
@@ -51,6 +51,7 @@ export default function NotFound() {
             className="absolute rounded-full opacity-0"
             style={{
               left: `${5 + (i * 4.7) % 90}%`,
+              // eslint-disable-next-line react-hooks/purity
               bottom: `${Math.random() * 30}%`,
               width: `${3 + (i % 4) * 2}px`,
               height: `${3 + (i % 4) * 2}px`,

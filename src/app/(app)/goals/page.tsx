@@ -8,7 +8,7 @@ import { formatCurrency } from "@/lib/utils"
 import type { Goal } from "@/lib/types"
 
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }
-const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } }
+const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
 
 export default function GoalsPage() {
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null)
@@ -109,6 +109,7 @@ export default function GoalsPage() {
             const pct = goal.targetAmount > 0 ? (goal.savedAmount / goal.targetAmount) * 100 : 0
             const remaining = goal.targetAmount - goal.savedAmount
             const deadlineDate = new Date(goal.deadline)
+            // eslint-disable-next-line react-hooks/purity
             const daysLeft = Math.max(0, Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
             const isBehind = daysLeft > 0 && remaining > 0 && (remaining / daysLeft) > (goal.targetAmount / 90)
 

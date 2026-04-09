@@ -407,9 +407,9 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   // ─── 9. Protect admin routes ───
   if (isAdminRoute(req)) {
     const session = await auth()
-    const role = session?.sessionClaims?.metadata?.role as string | undefined
+    const metadata = session?.sessionClaims?.metadata as Record<string, unknown> | undefined
 
-    if (role !== "admin") {
+    if (metadata?.role !== "admin") {
       return NextResponse.redirect(new URL("/dashboard", req.url))
     }
   }

@@ -91,6 +91,7 @@ export default function DailyRoastPage() {
     setShowShareMenu(false)
   }
 
+  // eslint-disable-next-line react-hooks/purity
   const quote = motivationalQuotes[Math.floor(Date.now() / 86400000) % motivationalQuotes.length]
 
   return (

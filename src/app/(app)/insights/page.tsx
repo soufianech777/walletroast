@@ -12,13 +12,18 @@ import { formatCurrency } from "@/lib/utils"
 import type { CategorySpending } from "@/lib/types"
 
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }
-const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } }
+const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
 
 export default function InsightsPage() {
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null)
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => { setUser(getUser()); setMounted(true) }, [])
+  useEffect(() => {
+    const u = getUser()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (u) setUser(u)
+    setMounted(true)
+  }, [])
 
   const data = useMemo(() => {
     if (!user || !mounted) return null

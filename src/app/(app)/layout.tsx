@@ -42,6 +42,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const u = getUser()
     if (!u) { router.push("/onboarding"); return }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUser(u)
     setNotifications(getNotifications())
     const saved = localStorage.getItem("walletroast_theme") as "dark" | "light" | null

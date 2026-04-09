@@ -9,7 +9,7 @@ import type { Category, Budget } from "@/lib/types"
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } }
 }
 
 export default function BudgetsPage() {
@@ -22,7 +22,13 @@ export default function BudgetsPage() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setUser(getUser()); setCategories(getCategories()); setBudgets(getBudgets()); setExpenses(getCurrentMonthExpenses()); setMounted(true)
+    const u = getUser()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (u) setUser(u)
+    setCategories(getCategories())
+    setBudgets(getBudgets())
+    setExpenses(getCurrentMonthExpenses())
+    setMounted(true)
   }, [])
 
   const refreshData = () => setBudgets(getBudgets())

@@ -25,8 +25,8 @@ export async function requireAdmin() {
     redirect("/login")
   }
 
-  const role = session?.sessionClaims?.metadata?.role as string | undefined
-  if (role !== "admin") {
+  const metadata = session?.sessionClaims?.metadata as Record<string, unknown> | undefined
+  if (metadata?.role !== "admin") {
     redirect("/dashboard")
   }
 
@@ -59,6 +59,6 @@ export async function getCurrentUser() {
  */
 export async function isAdmin(): Promise<boolean> {
   const session = await auth()
-  const role = session?.sessionClaims?.metadata?.role as string | undefined
-  return role === "admin"
+  const metadata = session?.sessionClaims?.metadata as Record<string, unknown> | undefined
+  return metadata?.role === "admin"
 }
