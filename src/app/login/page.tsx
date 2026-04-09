@@ -10,12 +10,24 @@ import { Flame, Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, BarChart3, Trendi
 export default function LoginPage() {
   const router = useRouter()
   const { signIn, isLoaded } = useSignIn()
+  const [googleLoading, setGoogleLoading] = useState(false)
 
-  const handleGoogleSignIn = () => {
-    if (isLoaded && signIn) {
-      signIn.authenticateWithRedirect({ strategy: "oauth_google", redirectUrl: "/sso-callback", redirectUrlComplete: "/dashboard" })
-    } else {
-      window.location.href = "https://fair-gnat-67.clerk.accounts.dev/sign-in?redirect_url=" + encodeURIComponent(window.location.origin + "/dashboard")
+  const handleGoogleSignIn = async () => {
+    if (!isLoaded || !signIn) {
+      alert("Still loading, please wait a moment and try again...")
+      return
+    }
+    setGoogleLoading(true)
+    try {
+      await signIn.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: "/dashboard",
+      })
+    } catch (err) {
+      console.error("Google sign-in error:", err)
+      alert("Google sign-in failed. Please try again.")
+      setGoogleLoading(false)
     }
   }
   const [showPassword, setShowPassword] = useState(false)

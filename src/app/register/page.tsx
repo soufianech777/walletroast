@@ -10,12 +10,24 @@ import { Flame, Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Shield, Zap
 export default function RegisterPage() {
   const router = useRouter()
   const { signUp, isLoaded } = useSignUp()
+  const [googleLoading, setGoogleLoading] = useState(false)
 
-  const handleGoogleSignUp = () => {
-    if (isLoaded && signUp) {
-      signUp.authenticateWithRedirect({ strategy: "oauth_google", redirectUrl: "/sso-callback", redirectUrlComplete: "/onboarding" })
-    } else {
-      window.location.href = "https://fair-gnat-67.clerk.accounts.dev/sign-up?redirect_url=" + encodeURIComponent(window.location.origin + "/onboarding")
+  const handleGoogleSignUp = async () => {
+    if (!isLoaded || !signUp) {
+      alert("Still loading, please wait a moment and try again...")
+      return
+    }
+    setGoogleLoading(true)
+    try {
+      await signUp.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: "/onboarding",
+      })
+    } catch (err) {
+      console.error("Google sign-up error:", err)
+      alert("Google sign-up failed. Please try again.")
+      setGoogleLoading(false)
     }
   }
   const [showPassword, setShowPassword] = useState(false)
