@@ -393,6 +393,9 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     const allowedOrigins = [
       "https://walletroast.com",
       "https://www.walletroast.com",
+      "https://www.walletroast.online",
+      "https://walletroast.online",
+      "https://walletroast-hazel.vercel.app",
       ...(process.env.NODE_ENV === "development" ? ["http://localhost:3000"] : []),
     ]
 
