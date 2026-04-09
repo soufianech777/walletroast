@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Target, Plus, X, DollarSign, Calendar, Trash2, TrendingUp, AlertTriangle } from "lucide-react"
+import { Target, Plus, X, DollarSign, Calendar, Trash2, TrendingUp, AlertTriangle, Lightbulb } from "lucide-react"
 import { getUser, getGoals, addGoal, updateGoal, deleteGoal, getCurrentMonthExpenses, getBudgets, getCategories } from "@/lib/store"
 import { formatCurrency } from "@/lib/utils"
 import type { Goal } from "@/lib/types"
@@ -20,6 +20,7 @@ export default function GoalsPage() {
   const [addAmountGoalId, setAddAmountGoalId] = useState<string | null>(null)
   const [addAmount, setAddAmount] = useState("")
   const [mounted, setMounted] = useState(false)
+  const [aiAdvice, setAiAdvice] = useState<Record<string, string>>({})
 
   useEffect(() => { setUser(getUser()); setGoals(getGoals()); setMounted(true) }, [])
   const refresh = () => setGoals(getGoals())
@@ -34,6 +35,39 @@ export default function GoalsPage() {
     const goal = goals.find(g => g.id === goalId)
     if (goal) { updateGoal(goalId, { savedAmount: goal.savedAmount + Number(addAmount) }); setAddAmountGoalId(null); setAddAmount(""); refresh() }
   }
+
+  // Silently fetch AI advice for all goals on mount
+  useEffect(() => {
+    if (!user || goals.length === 0) return
+    const totalSpent = getCurrentMonthExpenses().reduce((s, e) => s + e.amount, 0)
+    goals.forEach(async (goal) => {
+      if (aiAdvice[goal.id]) return // already have advice
+      try {
+        const deadlineDate = new Date(goal.deadline)
+        const dLeft = Math.max(0, Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+        const res = await fetch("/api/ai/goals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: goal.title,
+            targetAmount: goal.targetAmount,
+            savedAmount: goal.savedAmount,
+            deadline: goal.deadline,
+            daysLeft: dLeft,
+            monthlyIncome: user?.monthlyIncome || 4000,
+            totalSpent,
+          }),
+        })
+        const data = await res.json()
+        if (data.advice) {
+          setAiAdvice(prev => ({ ...prev, [goal.id]: data.advice }))
+        }
+      } catch (err) {
+        console.error("AI goal advice failed silently:", err)
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goals.length, user !== null])
 
   if (!mounted) return <div className="animate-pulse"><div className="h-96 bg-[var(--color-secondary)] rounded-2xl" /></div>
 
@@ -152,6 +186,16 @@ export default function GoalsPage() {
                         <AlertTriangle className="w-3 h-3 shrink-0" />
                         Behind schedule — overspending in {overSpentCats.map(c => c.name).join(", ")}
                       </p>
+                    </div>
+                  )}
+
+                  {/* Smart Tip (auto-loaded) */}
+                  {aiAdvice[goal.id] && (
+                    <div className="p-3 bg-orange-500/5 border border-orange-500/15 rounded-xl mb-3">
+                      <p className="text-[10px] text-orange-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <Lightbulb className="w-3 h-3" /> Smart Tip
+                      </p>
+                      <p className="text-[12px] text-[var(--color-muted-foreground)] leading-relaxed">{aiAdvice[goal.id]}</p>
                     </div>
                   )}
 

@@ -7,6 +7,9 @@ import {
   MessageCircle, Clipboard, Check, Sparkles, TrendingDown,
   DollarSign, ExternalLink, Heart, Clock
 } from "lucide-react"
+import { getCategories, getBudgets, getGoals } from "@/lib/store"
+import { calculateDisciplineScore } from "@/lib/engines/discipline-score"
+import { getMonthDays } from "@/lib/utils"
 import { getUser, getExpenses } from "@/lib/store"
 
 const dailyRoasts = [
@@ -35,6 +38,7 @@ export default function DailyRoastPage() {
   const [streak, setStreak] = useState(7)
   const [totalSpent, setTotalSpent] = useState(0)
   const [topCategory, setTopCategory] = useState("Food")
+  const [aiRoast, setAiRoast] = useState<string | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -68,7 +72,59 @@ export default function DailyRoastPage() {
   const refreshRoast = () => {
     const newIndex = Math.floor(Math.random() * dailyRoasts.length)
     setTodayRoast(dailyRoasts[newIndex])
+    setAiRoast(null)
   }
+
+  // Silently fetch AI roast in background on mount
+  useEffect(() => {
+    if (!user) return
+    const cacheKey = `walletroast_ai_roast_${new Date().toDateString()}`
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) { setAiRoast(cached); return }
+
+    ;(async () => {
+      try {
+        const expenses = getExpenses()
+        const categories = getCategories()
+        const budgets = getBudgets()
+        const thisMonth = expenses.filter(e => {
+          const d = new Date(e.expenseDate)
+          const now = new Date()
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+        })
+        const spent = thisMonth.reduce((s, e) => s + e.amount, 0)
+        const { remaining: daysLeft } = getMonthDays()
+        const catData = categories.map(cat => {
+          const catSpent = thisMonth.filter(e => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0)
+          const budget = budgets.find(b => b.categoryId === cat.id)?.monthlyLimit || 0
+          return { name: cat.name, spent: catSpent, budget }
+        }).filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent)
+        const score = calculateDisciplineScore(spent, user?.monthlyIncome || 4000, catData.map(c => ({ ...c, percentage: c.budget > 0 ? (c.spent/c.budget)*100 : 0, category: { id: '', name: c.name, icon: '', color: '' } })))
+
+        const res = await fetch("/api/ai/roast", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            monthlyIncome: user?.monthlyIncome || 4000,
+            totalSpent: spent,
+            categories: catData,
+            disciplineScore: score.score,
+            roastLevel: user?.roastLevel || "direct",
+            topCategory: catData[0]?.name || "Food",
+            daysLeft,
+          }),
+        })
+        const data = await res.json()
+        if (data.roast) {
+          setAiRoast(data.roast)
+          localStorage.setItem(cacheKey, data.roast)
+        }
+      } catch (err) {
+        console.error("AI roast failed silently:", err)
+      }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const shareText = `🔥 Today's WalletRoast:\n\n"${todayRoast.roast}"\n\n— Get roasted at walletroast.com`
 
@@ -149,7 +205,7 @@ export default function DailyRoastPage() {
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                   todayRoast.severity === "brutal" ? "bg-red-500/15 text-red-400" : "bg-amber-500/15 text-amber-400"
                 }`}>
-                  {todayRoast.severity} mode
+                  {user?.roastLevel || todayRoast.severity} mode
                 </span>
                 <p className="text-[11px] text-zinc-500 mt-1">{todayRoast.category}</p>
               </div>
@@ -157,7 +213,7 @@ export default function DailyRoastPage() {
 
             {/* The roast */}
             <p className="text-lg sm:text-xl text-zinc-100 leading-relaxed font-medium mb-8">
-              &ldquo;{todayRoast.roast}&rdquo;
+              &ldquo;{aiRoast || todayRoast.roast}&rdquo;
             </p>
 
             {/* Stats row */}

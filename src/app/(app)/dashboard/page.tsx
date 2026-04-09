@@ -83,6 +83,7 @@ const fadeUp = {
 export default function DashboardPage() {
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null)
   const [mounted, setMounted] = useState(false)
+  const [aiTip, setAiTip] = useState<string | null>(null)
 
   useEffect(() => {
     const u = getUser()
@@ -90,6 +91,50 @@ export default function DashboardPage() {
     if (u) setUser(u)
     setMounted(true)
   }, [])
+
+  // Silently fetch AI daily tip
+  useEffect(() => {
+    if (!user || !mounted) return
+    const cacheKey = `walletroast_ai_tip_${new Date().toDateString()}`
+    const cached = localStorage.getItem(cacheKey)
+    if (cached) { setAiTip(cached); return }
+    // Wait for data to be ready in next tick
+    setTimeout(async () => {
+      try {
+        const expenses = getCurrentMonthExpenses()
+        const categories = getCategories()
+        const budgets = getBudgets()
+        const totalSpent = expenses.reduce((s, e) => s + e.amount, 0)
+        const catSpending = categories.map(cat => {
+          const spent = expenses.filter(e => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0)
+          const budget = budgets.find(b => b.categoryId === cat.id)?.monthlyLimit || 0
+          return { name: cat.name, spent, budget }
+        }).filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent)
+        const { remaining: daysLeft } = getMonthDays()
+        const res = await fetch("/api/ai/roast", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            monthlyIncome: user.monthlyIncome,
+            totalSpent,
+            categories: catSpending.slice(0, 5),
+            disciplineScore: 50,
+            roastLevel: user.roastLevel,
+            topCategory: catSpending[0]?.name || "Food",
+            daysLeft,
+          }),
+        })
+        const result = await res.json()
+        if (result.roast) {
+          setAiTip(result.roast)
+          localStorage.setItem(cacheKey, result.roast)
+        }
+      } catch (err) {
+        console.error("AI tip failed silently:", err)
+      }
+    }, 500)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user !== null])
 
   const data = useMemo(() => {
     if (!user || !mounted) return null
@@ -235,6 +280,23 @@ export default function DashboardPage() {
           </div>
         ))}
       </motion.div>
+
+      {/* ─── Smart Tip (auto-loaded) ─── */}
+      {aiTip && (
+        <motion.div variants={fadeUp}>
+          <div className="glass-card p-5 rounded-2xl border border-orange-500/10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-orange-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-[13px]">Today&apos;s Smart Tip</h3>
+                <p className="mt-1 text-[13px] text-[var(--color-muted-foreground)] leading-relaxed">{aiTip}</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ─── Insights + Score ─── */}
       <div className="grid lg:grid-cols-5 gap-5">

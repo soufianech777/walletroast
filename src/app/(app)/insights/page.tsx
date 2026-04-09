@@ -10,6 +10,8 @@ import { getUser, getCurrentMonthExpenses, getBudgets, getCategories, getGoals }
 import { generateInsights, getBiggestWaste, getEasiestFix } from "@/lib/engines/insight-engine"
 import { formatCurrency } from "@/lib/utils"
 import type { CategorySpending } from "@/lib/types"
+import { calculateDisciplineScore } from "@/lib/engines/discipline-score"
+import { getMonthDays } from "@/lib/utils"
 
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }
 const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } } }
@@ -17,6 +19,7 @@ const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, tra
 export default function InsightsPage() {
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null)
   const [mounted, setMounted] = useState(false)
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
 
   useEffect(() => {
     const u = getUser()
@@ -50,6 +53,36 @@ export default function InsightsPage() {
 
     return { insights, biggestWaste, easiestFix, catSpending, weekTotal, weekExpenses, totalSpent }
   }, [user, mounted])
+
+  // Silently fetch AI insights in background
+  useEffect(() => {
+    if (!data || !user) return
+    ;(async () => {
+      try {
+        const { remaining: daysLeft } = getMonthDays()
+        const catData = data.catSpending.map(c => ({ name: c.category.name, spent: c.spent, budget: c.budget }))
+        const score = calculateDisciplineScore(data.totalSpent, user.monthlyIncome, data.catSpending)
+        const res = await fetch("/api/ai/insights", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            monthlyIncome: user.monthlyIncome,
+            totalSpent: data.totalSpent,
+            categories: catData,
+            disciplineScore: score.score,
+            roastLevel: user.roastLevel,
+            topCategory: catData[0]?.name || "Unknown",
+            daysLeft,
+          }),
+        })
+        const result = await res.json()
+        if (result.insights) setAiAnalysis(result.insights)
+      } catch (err) {
+        console.error("AI insights failed silently:", err)
+      }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data !== null])
 
   if (!mounted || !user || !data) {
     return <div className="space-y-5">{[1,2,3].map(i => <div key={i} className="h-40 bg-[var(--color-secondary)] rounded-2xl animate-pulse" />)}</div>
@@ -99,6 +132,27 @@ export default function InsightsPage() {
           )}
         </div>
       </motion.div>
+
+      {/* ─── Smart Analysis (auto-loaded) ─── */}
+      {aiAnalysis && (
+        <motion.div variants={fadeUp}>
+          <div className="glass-card p-6 rounded-2xl border border-orange-500/10">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-7 h-7 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <Zap className="w-4 h-4 text-orange-400" />
+              </div>
+              <h2 className="font-bold text-[15px]">Smart Analysis</h2>
+            </div>
+            <div className="space-y-2">
+              {aiAnalysis.split("\n").filter(Boolean).map((line, i) => (
+                <p key={i} className="text-[13px] text-[var(--color-muted-foreground)] leading-relaxed">
+                  {line}
+                </p>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       <div className="grid sm:grid-cols-2 gap-5">
         {/* Biggest Waste */}
