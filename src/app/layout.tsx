@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next"
+import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
 
 const SITE_URL = "https://walletroast.com"
@@ -306,7 +307,9 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased noise-bg" suppressHydrationWarning>
-        {children}
+        <ClerkProvider>
+          {children}
+        </ClerkProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `
