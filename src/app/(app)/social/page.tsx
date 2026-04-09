@@ -119,7 +119,7 @@ function RoastPostCard({
   }
 
   return (
-    <motion.div variants={fadeUp} className={`glass-card rounded-2xl p-5 roast-${post.roastLevel} hover:border-[var(--color-border-hover)] transition-all duration-300`}>
+    <motion.div variants={fadeUp} className={`glass-card rounded-2xl p-4 sm:p-5 roast-${post.roastLevel} hover:border-[var(--color-border-hover)] transition-all duration-300`}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <Avatar name={post.username} gradient={post.avatarGradient} anonymous={post.isAnonymous} />
@@ -164,7 +164,7 @@ function RoastPostCard({
       </p>
 
       {/* Emoji Reactions */}
-      <div className="flex flex-wrap gap-1.5 mb-3">
+      <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3">
         {SOCIAL_REACTIONS.map(emoji => {
           const count = post.reactions[emoji]?.length || 0
           const isActive = post.reactions[emoji]?.includes(user.id) || false
@@ -308,7 +308,7 @@ function CommentsSection({
                     </button>
                     {comment.userId === user.id && (
                       <button onClick={() => handleDelete(comment.id)}
-                        className="text-[11px] text-[var(--color-muted-foreground)] hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                        className="text-[11px] text-[var(--color-muted-foreground)] hover:text-red-400 transition-colors opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
                         <Trash2 className="w-3 h-3 inline" /> Delete
                       </button>
                     )}
@@ -413,12 +413,12 @@ function CreatePostModal({
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-        className="relative w-full max-w-xl glass-card rounded-2xl p-6 border border-[var(--color-border)] shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="relative w-full sm:max-w-xl glass-card rounded-t-2xl sm:rounded-2xl p-4 sm:p-6 border border-[var(--color-border)] shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
@@ -447,7 +447,7 @@ function CreatePostModal({
               rows={3}
             />
             <div className="flex items-center justify-between mt-2">
-              <div className="flex gap-1 flex-wrap">
+              <div className="flex gap-1 flex-wrap max-w-full">
                 {quickEmojis.map(emoji => (
                   <button key={emoji} onClick={() => insertEmoji(emoji)}
                     className="w-7 h-7 rounded-lg hover:bg-[var(--color-secondary)] flex items-center justify-center text-sm transition-all hover:scale-110">
@@ -467,10 +467,10 @@ function CreatePostModal({
           <label className="text-[12px] font-semibold text-[var(--color-muted-foreground)] uppercase tracking-[0.1em] mb-2 block">
             How are you feeling?
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {moods.map(mood => (
               <button key={mood.label} onClick={() => setSelectedMood(selectedMood === mood.emoji ? "" : mood.emoji)}
-                className={`px-3 py-1.5 rounded-xl text-[12px] font-medium border transition-all duration-200 flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-[12px] font-medium border transition-all duration-200 flex items-center gap-1 sm:gap-1.5 ${
                   selectedMood === mood.emoji
                     ? "border-orange-500/40 bg-orange-500/10 text-orange-400 ring-1 ring-orange-500/20"
                     : "border-[var(--color-border)] text-[var(--color-muted-foreground)] hover:border-[var(--color-border-hover)]"
@@ -490,7 +490,7 @@ function CreatePostModal({
           <div className="flex flex-wrap gap-1.5">
             {hashtags.map(tag => (
               <button key={tag} onClick={() => toggleTag(tag)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all duration-200 ${
+                className={`px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold border transition-all duration-200 ${
                   selectedTags.includes(tag)
                     ? "border-orange-500/40 bg-orange-500/10 text-orange-400"
                     : "border-[var(--color-border)] text-[var(--color-muted-foreground)] hover:border-[var(--color-border-hover)]"
@@ -699,7 +699,7 @@ export default function SocialPage() {
   ]
 
   return (
-    <motion.div className="space-y-6" initial="hidden" animate="visible" variants={stagger}>
+    <motion.div className="space-y-6 overflow-x-hidden" initial="hidden" animate="visible" variants={stagger}>
       {/* ─── Header ─── */}
       <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -744,7 +744,7 @@ export default function SocialPage() {
       </motion.div>
 
       {/* ─── Feed Tabs ─── */}
-      <motion.div variants={fadeUp} className="flex gap-2 overflow-x-auto pb-1">
+      <motion.div variants={fadeUp} className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -914,7 +914,7 @@ export default function SocialPage() {
       {/* ─── 🔥 MEGA CTA FIRE BANNER 🔥 ─── */}
       <motion.div
         variants={fadeUp}
-        className="roast-cta-banner p-8 sm:p-10 text-center"
+        className="roast-cta-banner p-5 sm:p-10 text-center overflow-hidden"
       >
         {/* Fire Particles */}
         <div className="fire-particles">
@@ -1047,10 +1047,10 @@ export default function SocialPage() {
       {/* ─── Bottom Fire Ambient ─── */}
       <motion.div variants={fadeUp} className="pt-2 pb-4">
         <div className="bottom-glow-line mb-6" />
-        <div className="flex items-center justify-center gap-2 text-[11px] text-[var(--color-muted-foreground)]">
-          <Flame className="w-3.5 h-3.5 text-orange-400/60 heartbeat" />
+        <div className="flex items-center justify-center gap-2 text-[10px] sm:text-[11px] text-[var(--color-muted-foreground)] text-center">
+          <Flame className="w-3.5 h-3.5 text-orange-400/60 heartbeat shrink-0" />
           <span>WalletRoast Social — Where financial shame becomes entertainment</span>
-          <Flame className="w-3.5 h-3.5 text-orange-400/60 heartbeat" />
+          <Flame className="w-3.5 h-3.5 text-orange-400/60 heartbeat shrink-0" />
         </div>
       </motion.div>
 

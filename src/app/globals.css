@@ -403,6 +403,22 @@ button:focus-visible {
   animation: emoji-pop 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
+/* Mobile: Smaller emoji buttons */
+@media (max-width: 640px) {
+  .emoji-btn {
+    padding: 3px 7px;
+    font-size: 13px;
+    gap: 3px;
+  }
+  .mega-cta-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+  }
+  .stat-card {
+    padding: 1rem;
+  }
+}
+
 /* ─── Social: Podium Styles ─── */
 .podium-gold {
   background: linear-gradient(135deg, rgba(250, 204, 21, 0.15), rgba(234, 179, 8, 0.05));

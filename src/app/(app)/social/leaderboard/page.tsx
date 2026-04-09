@@ -104,7 +104,7 @@ export default function LeaderboardPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold border transition-all whitespace-nowrap ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-[12px] sm:text-[13px] font-semibold border transition-all whitespace-nowrap ${
               activeTab === tab.id ? "tab-active" : "border-[var(--color-border)] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] hover:border-[var(--color-border-hover)]"
             }`}
           >
@@ -164,7 +164,7 @@ export default function LeaderboardPage() {
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04, duration: 0.4 }}
-                className={`flex items-center gap-4 px-5 py-3.5 hover:bg-[var(--color-secondary)]/50 transition-colors ${isCurrentUser ? "bg-orange-500/[0.04] border-l-2 border-l-orange-400" : ""}`}
+                className={`flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-3.5 hover:bg-[var(--color-secondary)]/50 transition-colors ${isCurrentUser ? "bg-orange-500/[0.04] border-l-2 border-l-orange-400" : ""}`}
               >
                 <span className={`text-[14px] font-bold w-8 text-center ${isCurrentUser ? "text-orange-400" : "text-[var(--color-muted-foreground)]"}`}>
                   #{rank}

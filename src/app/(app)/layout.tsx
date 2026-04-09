@@ -380,8 +380,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {children}
           </div>
         </div>
-        <div className="lg:hidden">
-          <div className="p-5 sm:p-7 lg:p-9 max-w-6xl mx-auto">
+        <div className="lg:hidden overflow-x-hidden">
+          <div className="p-4 sm:p-7 lg:p-9 max-w-6xl mx-auto">
             {children}
           </div>
         </div>
