@@ -307,7 +307,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased noise-bg" suppressHydrationWarning>
-        <ClerkProvider>
+        <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_ZmFpci1nbmF0LTY3LmNsZXJrLmFjY291bnRzLmRldiQ"}>
           {children}
         </ClerkProvider>
         <script
