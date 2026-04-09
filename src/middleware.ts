@@ -19,30 +19,20 @@ const isProtectedRoute = createRouteMatcher([
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"])
 const isApiRoute = createRouteMatcher(["/api(.*)"])
+const isAuthRoute = createRouteMatcher([
+  "/login(.*)",
+  "/register(.*)",
+  "/forgot-password(.*)",
+  "/reset-password(.*)",
+])
 
 // ─── Blocked paths that should NEVER be accessible ───
 const BLOCKED_PATHS = [
-  "/.env",
-  "/.git",
-  "/.svn",
-  "/wp-admin",
-  "/wp-login",
-  "/wp-content",
-  "/xmlrpc.php",
-  "/phpmyadmin",
-  "/administrator",
-  "/.htaccess",
-  "/.htpasswd",
-  "/config.php",
-  "/wp-config",
-  "/server-status",
-  "/server-info",
-  "/.well-known/security.txt",
-  "/cgi-bin",
-  "/debug",
-  "/.DS_Store",
-  "/Thumbs.db",
-  "/web.config",
+  "/.env", "/.git", "/.svn", "/wp-admin", "/wp-login", "/wp-content",
+  "/xmlrpc.php", "/phpmyadmin", "/administrator", "/.htaccess", "/.htpasswd",
+  "/config.php", "/wp-config", "/server-status", "/server-info",
+  "/.well-known/security.txt", "/cgi-bin", "/debug", "/.DS_Store",
+  "/Thumbs.db", "/web.config", "/backup", "/dump", "/sql",
 ]
 
 // ─── Suspicious patterns in URLs ───
@@ -54,10 +44,151 @@ const SUSPICIOUS_PATTERNS = [
   /\0/,                // Null bytes
   /%(00|25|2e|2f)/i,   // Encoded traversals
   /\.(sql|bak|backup|old|orig|save|swp|tmp)$/i, // Sensitive file extensions
+  /union\s+select/i,   // SQL injection
+  /or\s+1\s*=\s*1/i,   // SQL injection
+  /;\s*drop\s+table/i, // SQL injection
+  /eval\s*\(/i,        // Code injection
+  /base64/i,           // Base64 injection attempts
 ]
 
+// ═══════════════════════════════════════════════════════
+// BRUTE-FORCE PROTECTION SYSTEM
+// ═══════════════════════════════════════════════════════
+
+interface BruteForceEntry {
+  attempts: number       // Number of attempts in current window
+  firstAttempt: number   // Timestamp of first attempt
+  lockoutUntil: number   // Timestamp when lockout expires (0 = not locked)
+  totalBans: number      // How many times this IP has been banned (escalation)
+}
+
+// Auth route brute-force tracker (login, register, forgot-password)
+const bruteForceMap = new Map<string, BruteForceEntry>()
+
+// Config
+const AUTH_MAX_ATTEMPTS = 5         // Max attempts before lockout
+const AUTH_WINDOW_MS = 60_000       // 1 minute window
+const BASE_LOCKOUT_MS = 60_000      // 1 minute base lockout
+const MAX_LOCKOUT_MS = 3_600_000    // 1 hour max lockout
+const PERMANENT_BAN_THRESHOLD = 10  // After 10 bans → 24hr ban
+
+function getBruteForceEntry(ip: string): BruteForceEntry {
+  const existing = bruteForceMap.get(ip)
+  if (existing) return existing
+  const entry: BruteForceEntry = { attempts: 0, firstAttempt: 0, lockoutUntil: 0, totalBans: 0 }
+  bruteForceMap.set(ip, entry)
+  return entry
+}
+
+function checkBruteForce(ip: string): { blocked: boolean; retryAfter: number; message: string } {
+  const now = Date.now()
+  const entry = getBruteForceEntry(ip)
+
+  // Check if currently locked out
+  if (entry.lockoutUntil > now) {
+    const retryAfter = Math.ceil((entry.lockoutUntil - now) / 1000)
+    return {
+      blocked: true,
+      retryAfter,
+      message: `Too many attempts. Try again in ${formatTime(retryAfter)}.`,
+    }
+  }
+
+  // Reset window if expired
+  if (entry.firstAttempt > 0 && now - entry.firstAttempt > AUTH_WINDOW_MS) {
+    entry.attempts = 0
+    entry.firstAttempt = 0
+  }
+
+  // Track attempt
+  if (entry.attempts === 0) {
+    entry.firstAttempt = now
+  }
+  entry.attempts++
+
+  // Check if exceeded
+  if (entry.attempts > AUTH_MAX_ATTEMPTS) {
+    entry.totalBans++
+
+    // Progressive lockout: doubles each time, caps at MAX_LOCKOUT_MS
+    // After PERMANENT_BAN_THRESHOLD bans → 24 hour ban
+    let lockoutMs: number
+    if (entry.totalBans >= PERMANENT_BAN_THRESHOLD) {
+      lockoutMs = 24 * 60 * 60 * 1000 // 24 hours
+    } else {
+      lockoutMs = Math.min(
+        BASE_LOCKOUT_MS * Math.pow(2, entry.totalBans - 1),
+        MAX_LOCKOUT_MS
+      )
+    }
+
+    entry.lockoutUntil = now + lockoutMs
+    entry.attempts = 0
+    entry.firstAttempt = 0
+
+    const retryAfter = Math.ceil(lockoutMs / 1000)
+    return {
+      blocked: true,
+      retryAfter,
+      message: `Account locked for ${formatTime(retryAfter)} due to too many attempts.`,
+    }
+  }
+
+  const remaining = AUTH_MAX_ATTEMPTS - entry.attempts
+  return { blocked: false, retryAfter: 0, message: `${remaining} attempts remaining` }
+}
+
+function formatTime(seconds: number): string {
+  if (seconds < 60) return `${seconds} seconds`
+  if (seconds < 3600) return `${Math.ceil(seconds / 60)} minutes`
+  return `${Math.ceil(seconds / 3600)} hours`
+}
+
+// ═══════════════════════════════════════════════════════
+// SUSPICIOUS BEHAVIOR TRACKER
+// ═══════════════════════════════════════════════════════
+
+interface SuspiciousEntry {
+  blockedHits: number    // How many blocked paths this IP has hit
+  suspiciousHits: number // How many suspicious patterns detected
+  firstHit: number       // Timestamp
+  banned: boolean        // Permanently banned this session
+}
+
+const suspiciousMap = new Map<string, SuspiciousEntry>()
+const SUSPICIOUS_THRESHOLD = 5     // 5 bad requests → auto-ban
+const SUSPICIOUS_WINDOW_MS = 300_000 // 5 minute window
+
+function trackSuspicious(ip: string, type: "blocked" | "pattern"): boolean {
+  const now = Date.now()
+  let entry = suspiciousMap.get(ip)
+
+  if (!entry || now - entry.firstHit > SUSPICIOUS_WINDOW_MS) {
+    entry = { blockedHits: 0, suspiciousHits: 0, firstHit: now, banned: false }
+    suspiciousMap.set(ip, entry)
+  }
+
+  if (entry.banned) return true
+
+  if (type === "blocked") entry.blockedHits++
+  if (type === "pattern") entry.suspiciousHits++
+
+  const totalBad = entry.blockedHits + entry.suspiciousHits
+  if (totalBad >= SUSPICIOUS_THRESHOLD) {
+    entry.banned = true
+    return true // Ban this IP
+  }
+
+  return false
+}
+
+function isIPBanned(ip: string): boolean {
+  const entry = suspiciousMap.get(ip)
+  return entry?.banned === true
+}
+
 // ─── Security Headers ───
-function applySecurityHeaders(response: NextResponse) {
+function applySecurityHeaders(response: NextResponse, isAuth: boolean = false) {
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com",
@@ -82,8 +213,14 @@ function applySecurityHeaders(response: NextResponse) {
     "Strict-Transport-Security",
     "max-age=63072000; includeSubDomains; preload"
   )
-  // Prevent search engines from indexing API routes
   response.headers.set("X-Robots-Tag", "noindex, nofollow")
+
+  // Extra headers for auth pages — prevent caching of login/register
+  if (isAuth) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
+  }
 
   return response
 }
@@ -108,80 +245,143 @@ function isRateLimited(ip: string, limit: number): boolean {
   return entry.count > limit
 }
 
-// Clean up old entries every 60 seconds
+// Clean up all maps every 5 minutes
 if (typeof setInterval !== "undefined") {
   setInterval(() => {
     const now = Date.now()
+    // Clean rate limit entries
     for (const [key, value] of rateLimitMap) {
-      if (now > value.resetTime) {
-        rateLimitMap.delete(key)
+      if (now > value.resetTime) rateLimitMap.delete(key)
+    }
+    // Clean brute force entries (keep banned ones for 24h)
+    for (const [key, value] of bruteForceMap) {
+      if (value.lockoutUntil > 0 && now > value.lockoutUntil && value.totalBans < PERMANENT_BAN_THRESHOLD) {
+        bruteForceMap.delete(key)
       }
     }
-  }, 60000)
+    // Clean suspicious entries (keep bans for 1 hour)
+    for (const [key, value] of suspiciousMap) {
+      if (!value.banned && now - value.firstHit > SUSPICIOUS_WINDOW_MS) {
+        suspiciousMap.delete(key)
+      }
+      if (value.banned && now - value.firstHit > 3_600_000) {
+        suspiciousMap.delete(key)
+      }
+    }
+  }, 300_000)
 }
 
 // ─── Block bots scanning for vulnerabilities ───
 function isBlockedBot(userAgent: string): boolean {
   const blockedBots = [
-    "sqlmap",
-    "nikto",
-    "dirbuster",
-    "gobuster",
-    "wfuzz",
-    "nmap",
-    "masscan",
-    "zgrab",
-    "nuclei",
-    "httpx",
-    "subfinder",
-    "whatweb",
-    "wpscan",
-    "joomscan",
-    "acunetix",
-    "nessus",
-    "burp",
+    "sqlmap", "nikto", "dirbuster", "gobuster", "wfuzz", "nmap",
+    "masscan", "zgrab", "nuclei", "httpx", "subfinder", "whatweb",
+    "wpscan", "joomscan", "acunetix", "nessus", "burp", "hydra",
+    "medusa", "john", "hashcat", "metasploit", "openvas",
+    "scrapy", "wget/1", "python-requests", "go-http-client",
   ]
   const ua = userAgent.toLowerCase()
   return blockedBots.some(bot => ua.includes(bot))
 }
+
+// ─── 403 Forbidden response ───
+function forbidden(message: string = "Forbidden") {
+  return new NextResponse(
+    JSON.stringify({ error: message }),
+    { status: 403, headers: { "Content-Type": "application/json" } }
+  )
+}
+
+// ─── 429 Too Many Requests ───
+function tooManyRequests(message: string, retryAfter: number, html: boolean = false) {
+  if (html) {
+    return new NextResponse(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Slow Down</title>
+      <style>body{font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#050507;color:#fff}
+      .c{text-align:center;max-width:400px;padding:2rem}.e{font-size:3rem;margin-bottom:1rem}
+      h1{font-size:1.5rem;margin-bottom:.5rem}p{color:#71717a;font-size:.875rem;line-height:1.6}
+      .t{color:#f97316;font-weight:bold;font-size:1.25rem;margin-top:1rem}</style></head>
+      <body><div class="c"><div class="e">🛑</div><h1>Too Many Requests</h1>
+      <p>${message}</p><div class="t">Retry in ${retryAfter}s</div></div></body></html>`,
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "text/html",
+          "Retry-After": String(retryAfter),
+          "Cache-Control": "no-store",
+        },
+      }
+    )
+  }
+  return new NextResponse(
+    JSON.stringify({ error: message }),
+    {
+      status: 429,
+      headers: {
+        "Content-Type": "application/json",
+        "Retry-After": String(retryAfter),
+      },
+    }
+  )
+}
+
+// ═══════════════════════════════════════════════════════
+// MAIN MIDDLEWARE
+// ═══════════════════════════════════════════════════════
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const { pathname } = req.nextUrl
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
   const userAgent = req.headers.get("user-agent") || ""
 
-  // ─── 1. Block vulnerability scanners ───
-  if (isBlockedBot(userAgent)) {
-    return new NextResponse("Forbidden", { status: 403 })
+  // ─── 0. Check if IP is already banned ───
+  if (isIPBanned(ip)) {
+    return forbidden("Your access has been temporarily restricted.")
   }
 
-  // ─── 2. Block known bad paths (honeypot) ───
+  // ─── 1. Block vulnerability scanners & cracking tools ───
+  if (isBlockedBot(userAgent)) {
+    trackSuspicious(ip, "blocked")
+    return forbidden()
+  }
+
+  // ─── 2. Block empty user-agents (likely bots/scripts) ───
+  if (!userAgent || userAgent.length < 10) {
+    trackSuspicious(ip, "blocked")
+    return forbidden()
+  }
+
+  // ─── 3. Block known bad paths (honeypot) ───
   const lowerPath = pathname.toLowerCase()
   if (BLOCKED_PATHS.some(blocked => lowerPath.startsWith(blocked))) {
+    const shouldBan = trackSuspicious(ip, "blocked")
+    if (shouldBan) return forbidden("Your access has been temporarily restricted.")
     return new NextResponse("Not Found", { status: 404 })
   }
 
-  // ─── 3. Check for suspicious URL patterns ───
-  if (SUSPICIOUS_PATTERNS.some(pattern => pattern.test(pathname))) {
+  // ─── 4. Check for suspicious URL patterns (SQLi, XSS, traversal) ───
+  const fullUrl = req.nextUrl.toString()
+  if (SUSPICIOUS_PATTERNS.some(pattern => pattern.test(pathname) || pattern.test(fullUrl))) {
+    const shouldBan = trackSuspicious(ip, "pattern")
+    if (shouldBan) return forbidden("Your access has been temporarily restricted.")
     return new NextResponse("Bad Request", { status: 400 })
   }
 
-  // ─── 4. Rate limit API routes (stricter) ───
+  // ─── 5. BRUTE-FORCE PROTECTION on auth routes ───
+  if (isAuthRoute(req)) {
+    const bruteCheck = checkBruteForce(ip)
+    if (bruteCheck.blocked) {
+      return tooManyRequests(bruteCheck.message, bruteCheck.retryAfter, true)
+    }
+  }
+
+  // ─── 6. Rate limit API routes (strict) ───
   if (isApiRoute(req)) {
     if (isRateLimited(ip, API_RATE_LIMIT)) {
-      return new NextResponse(
-        JSON.stringify({ error: "Too many requests. Please try again later." }),
-        {
-          status: 429,
-          headers: {
-            "Content-Type": "application/json",
-            "Retry-After": "1",
-          },
-        }
-      )
+      return tooManyRequests("Too many requests. Please try again later.", 1)
     }
 
-    // Validate Origin for API routes (CORS-like protection)
+    // Validate Origin (CORS-like protection)
     const origin = req.headers.get("origin")
     const allowedOrigins = [
       "https://walletroast.com",
@@ -190,30 +390,21 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     ]
 
     if (origin && !allowedOrigins.includes(origin)) {
-      return new NextResponse(
-        JSON.stringify({ error: "Forbidden" }),
-        { status: 403, headers: { "Content-Type": "application/json" } }
-      )
+      return forbidden("Cross-origin request blocked.")
     }
   }
 
-  // ─── 5. Rate limit page routes (more lenient) ───
-  if (!isApiRoute(req) && isRateLimited(ip, PAGE_RATE_LIMIT)) {
-    return new NextResponse(
-      "<html><body><h1>Too Many Requests</h1><p>Please slow down and try again.</p></body></html>",
-      {
-        status: 429,
-        headers: { "Content-Type": "text/html", "Retry-After": "2" },
-      }
-    )
+  // ─── 7. Rate limit page routes (lenient) ───
+  if (!isApiRoute(req) && !isAuthRoute(req) && isRateLimited(ip, PAGE_RATE_LIMIT)) {
+    return tooManyRequests("Please slow down and try again.", 2, true)
   }
 
-  // ─── 6. Protect authenticated routes ───
+  // ─── 8. Protect authenticated routes ───
   if (isProtectedRoute(req)) {
     await auth.protect()
   }
 
-  // ─── 7. Protect admin routes ───
+  // ─── 9. Protect admin routes ───
   if (isAdminRoute(req)) {
     const session = await auth()
     const role = session?.sessionClaims?.metadata?.role as string | undefined
@@ -223,9 +414,9 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     }
   }
 
-  // ─── 8. Apply security headers to all responses ───
+  // ─── 10. Apply security headers ───
   const response = NextResponse.next()
-  return applySecurityHeaders(response)
+  return applySecurityHeaders(response, isAuthRoute(req))
 })
 
 export const config = {
