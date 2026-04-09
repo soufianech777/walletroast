@@ -191,15 +191,15 @@ function isIPBanned(ip: string): boolean {
 function applySecurityHeaders(response: NextResponse, isAuth: boolean = false) {
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https: http:",
-    "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://*.clerk.accounts.dev https://api.clerk.dev",
-    "frame-src 'self' https://*.clerk.accounts.dev",
+    "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://*.clerk.accounts.dev https://api.clerk.dev https://*.clerk.com",
+    "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com https://accounts.google.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    "form-action 'self' https://*.clerk.accounts.dev https://accounts.google.com",
     "upgrade-insecure-requests",
   ].join("; ")
 
@@ -213,7 +213,7 @@ function applySecurityHeaders(response: NextResponse, isAuth: boolean = false) {
     "Strict-Transport-Security",
     "max-age=63072000; includeSubDomains; preload"
   )
-  response.headers.set("X-Robots-Tag", "noindex, nofollow")
+  response.headers.set("X-Robots-Tag", "index, follow")
 
   // Extra headers for auth pages — prevent caching of login/register
   if (isAuth) {
