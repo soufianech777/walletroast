@@ -67,7 +67,7 @@ interface BruteForceEntry {
 const bruteForceMap = new Map<string, BruteForceEntry>()
 
 // Config
-const AUTH_MAX_ATTEMPTS = 5         // Max attempts before lockout
+const AUTH_MAX_ATTEMPTS = 20        // Max POST attempts before lockout
 const AUTH_WINDOW_MS = 60_000       // 1 minute window
 const BASE_LOCKOUT_MS = 60_000      // 1 minute base lockout
 const MAX_LOCKOUT_MS = 3_600_000    // 1 hour max lockout
@@ -374,8 +374,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return new NextResponse("Bad Request", { status: 400 })
   }
 
-  // ─── 5. BRUTE-FORCE PROTECTION on auth routes ───
-  if (isAuthRoute(req)) {
+  // ─── 5. BRUTE-FORCE PROTECTION on auth routes (POST only) ───
+  if (isAuthRoute(req) && req.method === "POST") {
     const bruteCheck = checkBruteForce(ip)
     if (bruteCheck.blocked) {
       return tooManyRequests(bruteCheck.message, bruteCheck.retryAfter, true)
