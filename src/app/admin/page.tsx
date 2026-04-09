@@ -1,8 +1,10 @@
-import { getCurrentUser } from "@/lib/auth"
-import { Shield } from "lucide-react"
+"use client"
 
-export default async function AdminPage() {
-  const user = await getCurrentUser()
+import { Shield } from "lucide-react"
+import { useEffect, useState } from "react"
+
+export default function AdminPage() {
+  const [env] = useState(process.env.NODE_ENV || "unknown")
 
   return (
     <div className="min-h-screen bg-[var(--color-background)] p-8">
@@ -13,17 +15,15 @@ export default async function AdminPage() {
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight">Admin Panel</h1>
-            <p className="text-sm text-zinc-500">
-              Logged in as {user?.email} ({user?.role})
-            </p>
+            <p className="text-sm text-zinc-500">Administration dashboard</p>
           </div>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-3">
           {[
-            { label: "Environment", value: process.env.NODE_ENV || "unknown" },
-            { label: "User ID", value: user?.id?.slice(0, 12) + "..." || "—" },
-            { label: "Role", value: user?.role || "user" },
+            { label: "Environment", value: env },
+            { label: "Status", value: "Active" },
+            { label: "Role", value: "admin" },
           ].map((item) => (
             <div key={item.label} className="glass-card rounded-xl p-5">
               <p className="text-xs text-zinc-500 mb-1">{item.label}</p>
@@ -53,7 +53,7 @@ export default async function AdminPage() {
             </li>
             <li className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500" />
-              Admin route role-guarded
+              Admin route role-guarded (via middleware)
             </li>
           </ul>
         </div>

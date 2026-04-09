@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
+// Required for static export (APK builds)
+export const dynamic = "force-static"
+
 /**
  * Health check endpoint — returns minimal info.
  * Does NOT expose version, environment, or internal details.
