@@ -24,6 +24,7 @@ const isAuthRoute = createRouteMatcher([
   "/register(.*)",
   "/forgot-password(.*)",
   "/reset-password(.*)",
+  "/sso-callback(.*)",
 ])
 
 // ─── Blocked paths that should NEVER be accessible ───
@@ -204,6 +205,18 @@ function applySecurityHeaders(response: NextResponse, isAuth: boolean = false) {
     "upgrade-insecure-requests",
   ].join("; ")
 
+  // Auth pages (login/register/sso-callback) need full Clerk JS — skip CSP for them
+  if (isAuth) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
+    // Only basic security headers, no CSP
+    response.headers.set("X-Content-Type-Options", "nosniff")
+    response.headers.set("X-Frame-Options", "DENY")
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+    return response
+  }
+
   response.headers.set("Content-Security-Policy", csp)
   response.headers.set("X-Content-Type-Options", "nosniff")
   response.headers.set("X-Frame-Options", "DENY")
@@ -215,13 +228,6 @@ function applySecurityHeaders(response: NextResponse, isAuth: boolean = false) {
     "max-age=63072000; includeSubDomains; preload"
   )
   response.headers.set("X-Robots-Tag", "index, follow")
-
-  // Extra headers for auth pages — prevent caching of login/register
-  if (isAuth) {
-    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private")
-    response.headers.set("Pragma", "no-cache")
-    response.headers.set("Expires", "0")
-  }
 
   return response
 }
