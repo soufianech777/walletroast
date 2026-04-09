@@ -191,7 +191,8 @@ function isIPBanned(ip: string): boolean {
 function applySecurityHeaders(response: NextResponse, isAuth: boolean = false) {
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+    "worker-src 'self' blob:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https: http:",
