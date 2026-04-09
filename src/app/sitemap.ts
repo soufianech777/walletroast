@@ -4,6 +4,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://walletroast.com"
   const now = new Date()
 
+  // ONLY list public, non-authenticated pages
+  // Never expose dashboard, API, admin, or any authenticated routes
   return [
     {
       url: baseUrl,
@@ -24,18 +26,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/forgot-password`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
-      url: `${baseUrl}/reset-password`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
       url: `${baseUrl}/privacy`,
       lastModified: now,
       changeFrequency: "monthly",
@@ -47,12 +37,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.5,
     },
-    // Blog / content pages can be added here later:
-    // {
-    //   url: `${baseUrl}/blog`,
-    //   lastModified: now,
-    //   changeFrequency: "daily",
-    //   priority: 0.7,
-    // },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    // DO NOT add: /dashboard, /expenses, /budgets, /settings, /social,
+    // /admin, /api/*, /onboarding, /daily-roast, /insights, /leaks, etc.
+    // These are private authenticated routes.
   ]
 }

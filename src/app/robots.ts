@@ -7,9 +7,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        allow: ["/", "/login", "/register", "/privacy", "/terms", "/contact"],
         disallow: [
           "/api/",
+          "/admin",
           "/dashboard",
           "/expenses",
           "/budgets",
@@ -22,12 +23,24 @@ export default function robots(): MetadataRoute.Robots {
           "/notifications",
           "/social",
           "/onboarding",
+          "/forgot-password",
+          "/reset-password",
+          "/_next/",
+          "/icon.png",
         ],
       },
+      // Block all known bad bots
       {
-        userAgent: "Googlebot",
-        allow: "/",
-        disallow: ["/api/"],
+        userAgent: [
+          "AhrefsBot",
+          "SemrushBot",
+          "MJ12bot",
+          "DotBot",
+          "PetalBot",
+          "BLEXBot",
+          "MegaIndex",
+        ],
+        disallow: ["/"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
