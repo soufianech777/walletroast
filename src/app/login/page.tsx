@@ -4,19 +4,25 @@ import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { useSignIn } from "@clerk/nextjs"
-import { Flame, Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, BarChart3, TrendingDown } from "lucide-react"
+import { useSignIn } from "@clerk/nextjs/legacy"
+import { Flame, Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, BarChart3, TrendingDown, AlertCircle } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { signIn, isLoaded } = useSignIn()
+  const { signIn, isLoaded, setActive } = useSignIn()
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleGoogleSignIn = async () => {
     if (!isLoaded || !signIn) {
-      alert("Still loading, please wait a moment and try again...")
+      setError("Authentication is still loading. Please wait a moment and try again.")
       return
     }
+    setError("")
     setGoogleLoading(true)
     try {
       await signIn.authenticateWithRedirect({
@@ -24,24 +30,63 @@ export default function LoginPage() {
         redirectUrl: "/sso-callback",
         redirectUrlComplete: "/dashboard",
       })
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Google sign-in error:", err)
-      alert("Google sign-in failed. Please try again.")
+      const clerkError = err as { errors?: Array<{ message?: string; longMessage?: string; code?: string }> }
+      if (clerkError?.errors?.[0]) {
+        const e = clerkError.errors[0]
+        setError(e.longMessage || e.message || "Google sign-in failed. Please try again.")
+      } else {
+        setError("Google sign-in failed. Please try again.")
+      }
       setGoogleLoading(false)
     }
   }
-  const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isLoaded || !signIn) {
+      setError("Authentication is still loading. Please wait a moment.")
+      return
+    }
+
+    setError("")
     setLoading(true)
-    setTimeout(() => {
-      const user = localStorage.getItem("walletroast_user")
-      router.push(user ? "/dashboard" : "/onboarding")
-    }, 800)
+
+    try {
+      const result = await signIn.create({
+        identifier: email,
+        password: password,
+      })
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId })
+        router.push("/dashboard")
+      } else {
+        // Handle other statuses (e.g., needs_factor_two)
+        console.log("Sign-in status:", result.status)
+        setError("Additional verification required. Please try again.")
+      }
+    } catch (err: unknown) {
+      console.error("Sign-in error:", err)
+      const clerkError = err as { errors?: Array<{ message?: string; longMessage?: string; code?: string }> }
+      if (clerkError?.errors?.[0]) {
+        const e = clerkError.errors[0]
+        if (e.code === "form_identifier_not_found") {
+          setError("No account found with this email. Please sign up first.")
+        } else if (e.code === "form_password_incorrect") {
+          setError("Incorrect password. Please try again or reset your password.")
+        } else if (e.code === "strategy_for_user_invalid") {
+          setError("This account uses Google sign-in. Please use the 'Continue with Google' button.")
+        } else {
+          setError(e.longMessage || e.message || "Sign-in failed. Please try again.")
+        }
+      } else {
+        setError("Sign-in failed. Please try again.")
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -122,6 +167,18 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Error message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-2.5"
+            >
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <p className="text-[13px] text-red-400 leading-relaxed">{error}</p>
+            </motion.div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Email */}
             <div>
@@ -162,6 +219,9 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Captcha */}
+            <div id="clerk-captcha"></div>
+
             {/* Submit */}
             <button type="submit" disabled={loading}
               className="w-full py-3.5 btn-primary rounded-xl text-[14px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 group">
@@ -188,11 +248,22 @@ export default function LoginPage() {
 
           {/* Google */}
           <button
+            type="button"
             onClick={handleGoogleSignIn}
-            className="w-full py-3 rounded-xl border border-[var(--color-border)] text-[13px] font-semibold hover:bg-[var(--color-secondary)] transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            disabled={googleLoading}
+            className="w-full py-3 rounded-xl border border-[var(--color-border)] text-[13px] font-semibold hover:bg-[var(--color-secondary)] transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            Continue with Google
+            {googleLoading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                Connecting to Google...
+              </span>
+            ) : (
+              <>
+                <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Continue with Google
+              </>
+            )}
           </button>
 
           {/* Sign up link */}
@@ -205,3 +276,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

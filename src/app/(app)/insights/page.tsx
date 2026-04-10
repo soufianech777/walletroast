@@ -61,7 +61,14 @@ export default function InsightsPage() {
       try {
         const { remaining: daysLeft } = getMonthDays()
         const catData = data.catSpending.map(c => ({ name: c.category.name, spent: c.spent, budget: c.budget }))
-        const score = calculateDisciplineScore(data.totalSpent, user.monthlyIncome, data.catSpending)
+        const score = calculateDisciplineScore({
+          categorySpending: data.catSpending,
+          hasSubscriptions: false,
+          subscriptionCount: 0,
+          savingsContribution: 0,
+          totalExpenseCount: data.catSpending.length,
+          daysTracked: new Date().getDate()
+        })
         const res = await fetch("/api/ai/insights", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

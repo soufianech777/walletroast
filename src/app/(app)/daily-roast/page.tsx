@@ -99,7 +99,19 @@ export default function DailyRoastPage() {
           const budget = budgets.find(b => b.categoryId === cat.id)?.monthlyLimit || 0
           return { name: cat.name, spent: catSpent, budget }
         }).filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent)
-        const score = calculateDisciplineScore(spent, user?.monthlyIncome || 4000, catData.map(c => ({ ...c, percentage: c.budget > 0 ? (c.spent/c.budget)*100 : 0, category: { id: '', name: c.name, icon: '', color: '' } })))
+        const score = calculateDisciplineScore({
+          categorySpending: catData.map(c => ({
+            spent: c.spent,
+            budget: c.budget,
+            percentage: c.budget > 0 ? (c.spent/c.budget)*100 : 0,
+            category: { id: '', name: c.name, icon: '', color: '', userId: '', isDefault: false }
+          })),
+          hasSubscriptions: false,
+          subscriptionCount: 0,
+          savingsContribution: 0,
+          totalExpenseCount: thisMonth.length,
+          daysTracked: new Date().getDate()
+        })
 
         const res = await fetch("/api/ai/roast", {
           method: "POST",
