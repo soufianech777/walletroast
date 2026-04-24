@@ -33,7 +33,7 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     const u = getUser()
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     if (u) setUser(u)
     setExpenses(getExpenses())
     setCategories(getCategories())

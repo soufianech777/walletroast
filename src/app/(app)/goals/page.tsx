@@ -143,7 +143,7 @@ export default function GoalsPage() {
             const pct = goal.targetAmount > 0 ? (goal.savedAmount / goal.targetAmount) * 100 : 0
             const remaining = goal.targetAmount - goal.savedAmount
             const deadlineDate = new Date(goal.deadline)
-            // eslint-disable-next-line react-hooks/purity
+             
             const daysLeft = Math.max(0, Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
             const isBehind = daysLeft > 0 && remaining > 0 && (remaining / daysLeft) > (goal.targetAmount / 90)
 

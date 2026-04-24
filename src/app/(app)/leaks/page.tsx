@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  AlertTriangle, TrendingDown, DollarSign, ChevronDown, ChevronUp,
-  Zap, X, ShieldAlert, Flame, Ban, Scissors
+  AlertTriangle, TrendingDown, ChevronDown, ChevronUp,
+  Zap, X, ShieldAlert, Flame, Scissors
 } from "lucide-react"
 import { getUser, getExpenses, getCategories } from "@/lib/store"
 import { detectMoneyLeaks, type MoneyLeak } from "@/lib/engines/leak-detector"
@@ -27,7 +27,7 @@ function SeverityBadge({ severity }: { severity: MoneyLeak["severity"] }) {
   )
 }
 
-function LeakCard({ leak, currency, index }: { leak: MoneyLeak; currency: string; index: number }) {
+function LeakCard({ leak, currency, _index }: { leak: MoneyLeak; currency: string; _index: number }) {
   const [expanded, setExpanded] = useState(false)
   const [showFix, setShowFix] = useState(false)
 

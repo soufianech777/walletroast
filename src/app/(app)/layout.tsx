@@ -9,7 +9,7 @@ import {
   Target, Settings, LogOut, Menu, X, Bell, Sun, Moon, ShieldAlert, FileBarChart, Users,
   ChevronLeft, ChevronRight, MessageCircle, Crown
 } from "lucide-react"
-import { getUser, getNotifications, markAllNotificationsRead } from "@/lib/store"
+import { getUser, getNotifications, markAllNotificationsRead, ensureStoreInitialized, isStoreInitialized, subscribe } from "@/lib/store"
 
 const navItemsTop = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -38,18 +38,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [showNotifs, setShowNotifs] = useState(false)
   const [theme, setTheme] = useState<"dark" | "light">("dark")
   const [socialNotifs] = useState(3) // Social notifications count
+  const [initialized, setInitialized] = useState(isStoreInitialized())
 
   useEffect(() => {
+    if (!initialized) {
+      ensureStoreInitialized()?.then(() => setInitialized(true));
+      return;
+    }
+
+    const unsub = subscribe(() => {
+      setUser(getUser())
+      setNotifications(getNotifications())
+    });
+
     const u = getUser()
     if (!u) { router.push("/onboarding"); return }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setUser(u)
     setNotifications(getNotifications())
     const saved = localStorage.getItem("walletroast_theme") as "dark" | "light" | null
     if (saved) setTheme(saved)
     const savedCollapsed = localStorage.getItem("walletroast_sidebar_collapsed")
     if (savedCollapsed === "true") setCollapsed(true)
-  }, [router, pathname])
+
+    return unsub;
+  }, [initialized, router, pathname])
 
   useEffect(() => {
     document.documentElement.className = theme === "light" ? "theme-light" : "dark"
@@ -63,7 +76,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const unreadCount = notifications.filter(n => !n.readStatus).length
-  if (!user) return null
+  if (!initialized || !user) return (
+    <div className="h-screen w-screen flex flex-col items-center justify-center bg-[var(--color-background)]">
+      <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4 animate-pulse">
+        <Flame className="w-6 h-6 text-orange-500" />
+      </div>
+      <p className="text-[var(--color-muted-foreground)] font-medium text-sm animate-pulse">Syncing Database...</p>
+    </div>
+  )
 
   const isPro = user.subscriptionPlan === "pro"
 
@@ -75,11 +95,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
       <Link key={item.href} href={item.href}
         title={collapsed ? item.label : undefined}
-        className={`flex items-center rounded-xl text-[13px] font-medium transition-all duration-200 ${
-          isActive
+        className={`flex items-center rounded-xl text-[13px] font-medium transition-all duration-200 ${isActive
             ? "bg-orange-500/10 text-orange-400 border border-orange-500/15 shadow-sm"
             : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-secondary)]"
-        }`}
+          }`}
         style={{
           gap: collapsed ? 0 : 12,
           padding: collapsed ? "10px 0" : "10px 14px",
@@ -110,7 +129,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-2.5 h-16 border-b border-[var(--color-border)]"
           style={{ padding: collapsed ? "0 16px" : "0 24px", justifyContent: collapsed ? "center" : "flex-start" }}>
           <div className="w-8 h-8 rounded-xl bg-[#111113] flex items-center justify-center shrink-0 shadow-md">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.5 7 4 9.5 4 14a8 8 0 0016 0c0-4.5-4.5-7-8-12z" fill="url(#flame-g)"/><path d="M12 9c-1.5 2.5-4 4-4 6.5a4 4 0 008 0c0-2.5-2.5-4-4-6.5z" fill="#111113"/><path d="M12 13c-.75 1.25-2 2-2 3.25a2 2 0 004 0c0-1.25-1.25-2-2-3.25z" fill="url(#flame-g2)"/><defs><linearGradient id="flame-g" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse"><stop stopColor="#ef4444"/><stop offset="1" stopColor="#f97316"/></linearGradient><linearGradient id="flame-g2" x1="12" y1="13" x2="12" y2="18" gradientUnits="userSpaceOnUse"><stop stopColor="#fbbf24"/><stop offset="1" stopColor="#f97316"/></linearGradient></defs></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.5 7 4 9.5 4 14a8 8 0 0016 0c0-4.5-4.5-7-8-12z" fill="url(#flame-g)" /><path d="M12 9c-1.5 2.5-4 4-4 6.5a4 4 0 008 0c0-2.5-2.5-4-4-6.5z" fill="#111113" /><path d="M12 13c-.75 1.25-2 2-2 3.25a2 2 0 004 0c0-1.25-1.25-2-2-3.25z" fill="url(#flame-g2)" /><defs><linearGradient id="flame-g" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse"><stop stopColor="#ef4444" /><stop offset="1" stopColor="#f97316" /></linearGradient><linearGradient id="flame-g2" x1="12" y1="13" x2="12" y2="18" gradientUnits="userSpaceOnUse"><stop stopColor="#fbbf24" /><stop offset="1" stopColor="#f97316" /></linearGradient></defs></svg>
           </div>
           {!collapsed && (
             <span className="text-base font-bold tracking-tight whitespace-nowrap overflow-hidden">WalletRoast</span>
@@ -125,11 +144,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div style={{ padding: collapsed ? "8px 0" : "8px 0" }}>
             <Link href={socialItem.href}
               title={collapsed ? socialItem.label : undefined}
-              className={`relative flex items-center rounded-xl text-[13px] font-semibold transition-all duration-200 ${
-                isSocialActive
+              className={`relative flex items-center rounded-xl text-[13px] font-semibold transition-all duration-200 ${isSocialActive
                   ? "bg-gradient-to-r from-orange-500/20 to-red-500/15 text-orange-300 border border-orange-500/25 shadow-md shadow-orange-500/10"
                   : "bg-gradient-to-r from-orange-500/8 to-red-500/5 text-orange-400 border border-orange-500/10 hover:from-orange-500/15 hover:to-red-500/10 hover:border-orange-500/20 hover:shadow-md hover:shadow-orange-500/5"
-              }`}
+                }`}
               style={{
                 gap: collapsed ? 0 : 10,
                 padding: collapsed ? "11px 0" : "11px 14px",
@@ -164,11 +182,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           }}>
             {/* ─── Profile Avatar with Pro Badge ─── */}
             <div className="relative shrink-0">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white overflow-hidden ${
-                isPro
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white overflow-hidden ${isPro
                   ? "ring-2 ring-amber-400 shadow-lg shadow-amber-500/30"
                   : "shadow-md shadow-orange-500/20"
-              }`}
+                }`}
                 style={{
                   background: isPro
                     ? "linear-gradient(135deg, #f59e0b, #d97706)"
@@ -287,20 +304,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   const isActive = pathname === item.href
                   return (
                     <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
-                        isActive ? "bg-orange-500/10 text-orange-400" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-secondary)]"
-                      }`}>
+                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all ${isActive ? "bg-orange-500/10 text-orange-400" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-secondary)]"
+                        }`}>
                       <item.icon className="w-[18px] h-[18px]" />{item.label}
                     </Link>
                   )
                 })}
                 <div className="py-1">
                   <Link href="/social" onClick={() => setSidebarOpen(false)}
-                    className={`relative flex items-center gap-3 px-3.5 py-3 rounded-xl text-[13px] font-semibold transition-all ${
-                      isSocialActive
+                    className={`relative flex items-center gap-3 px-3.5 py-3 rounded-xl text-[13px] font-semibold transition-all ${isSocialActive
                         ? "bg-gradient-to-r from-orange-500/20 to-red-500/15 text-orange-300 border border-orange-500/25"
                         : "bg-gradient-to-r from-orange-500/8 to-red-500/5 text-orange-400 border border-orange-500/10"
-                    }`}>
+                      }`}>
                     <div className="relative">
                       <MessageCircle className="w-[18px] h-[18px]" />
                       {socialNotifs > 0 && (
@@ -317,9 +332,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   const isActive = pathname === item.href
                   return (
                     <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
-                        isActive ? "bg-orange-500/10 text-orange-400" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-secondary)]"
-                      }`}>
+                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all ${isActive ? "bg-orange-500/10 text-orange-400" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-secondary)]"
+                        }`}>
                       <item.icon className="w-[18px] h-[18px]" />{item.label}
                     </Link>
                   )

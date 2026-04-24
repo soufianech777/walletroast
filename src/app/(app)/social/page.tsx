@@ -4,15 +4,15 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Users, Flame, TrendingUp, Clock, Trophy, Skull, Plus, X,
-  MessageCircle, Share2, Bookmark, Send, MoreHorizontal, Trash2,
-  Flag, Download, Eye, EyeOff, ChevronDown, ArrowRight, Zap,
+  MessageCircle, Share2, Send, Trash2,
+  Eye, EyeOff, ArrowRight, Zap,
   Crown, Target, Heart, Sparkles, AlertTriangle
 } from "lucide-react"
 import Link from "next/link"
 import {
   getUser, getSocialPosts, addSocialPost, toggleReaction, getPostComments,
   addSocialComment, deleteSocialComment, toggleCommentReaction, seedSocialDemoData,
-  initSocialProfile, getSocialProfile, incrementShareCount, getCurrentMonthExpenses,
+  initSocialProfile, incrementShareCount, getCurrentMonthExpenses,
   getBudgets, getCategories,
 } from "@/lib/store"
 import { generateUserRoastCard, getTotalReactions, AVATAR_GRADIENTS } from "@/lib/engines/roast-social-engine"
@@ -93,7 +93,6 @@ function RoastPostCard({
   const [popEmoji, setPopEmoji] = useState<string | null>(null)
   const totalReactions = getTotalReactions(post)
   const levelColor = post.roastLevel === "brutal" ? "text-red-400" : post.roastLevel === "direct" ? "text-amber-400" : "text-blue-400"
-  const levelBg = post.roastLevel === "brutal" ? "bg-red-500/10" : post.roastLevel === "direct" ? "bg-amber-500/10" : "bg-blue-500/10"
 
   const handleReact = (emoji: string) => {
     setPopEmoji(emoji)
@@ -670,7 +669,6 @@ export default function SocialPage() {
 
   // Comment counts
   const commentCounts = useMemo(() => {
-    const allComments = getSocialPosts().length > 0 ? getPostComments("") : []
     // We need to count from stored comments
     const counts: Record<string, number> = {}
     posts.forEach(p => {

@@ -1,7 +1,7 @@
 "use client"
 
 import { Shield } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 export default function AdminPage() {
   const [env] = useState(process.env.NODE_ENV || "unknown")

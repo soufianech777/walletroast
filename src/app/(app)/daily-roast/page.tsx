@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Flame, Share2, RefreshCw,
@@ -39,6 +39,7 @@ export default function DailyRoastPage() {
   const [totalSpent, setTotalSpent] = useState(0)
   const [topCategory, setTopCategory] = useState("Food")
   const [aiRoast, setAiRoast] = useState<string | null>(null)
+  const [quote, setQuote] = useState("")
   const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export default function DailyRoastPage() {
     // Deterministic daily roast based on day
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
     setTodayRoast(dailyRoasts[dayOfYear % dailyRoasts.length])
+    setQuote(motivationalQuotes[dayOfYear % motivationalQuotes.length])
 
     // Calculate stats
     const expenses = getExpenses()
@@ -82,7 +84,7 @@ export default function DailyRoastPage() {
     const cached = localStorage.getItem(cacheKey)
     if (cached) { setAiRoast(cached); return }
 
-    ;(async () => {
+    ; (async () => {
       try {
         const expenses = getExpenses()
         const categories = getCategories()
@@ -103,7 +105,7 @@ export default function DailyRoastPage() {
           categorySpending: catData.map(c => ({
             spent: c.spent,
             budget: c.budget,
-            percentage: c.budget > 0 ? (c.spent/c.budget)*100 : 0,
+            percentage: c.budget > 0 ? (c.spent / c.budget) * 100 : 0,
             category: { id: '', name: c.name, icon: '', color: '', userId: '', isDefault: false }
           })),
           hasSubscriptions: false,
@@ -135,7 +137,7 @@ export default function DailyRoastPage() {
         console.error("AI roast failed silently:", err)
       }
     })()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [user])
 
   const shareText = `🔥 Today's WalletRoast:\n\n"${todayRoast.roast}"\n\n— Get roasted at walletroast.com`
@@ -159,8 +161,7 @@ export default function DailyRoastPage() {
     setShowShareMenu(false)
   }
 
-  // eslint-disable-next-line react-hooks/purity
-  const quote = motivationalQuotes[Math.floor(Date.now() / 86400000) % motivationalQuotes.length]
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -214,9 +215,8 @@ export default function DailyRoastPage() {
             <div className="flex items-center gap-2 mb-5">
               <span className="text-4xl">{todayRoast.emoji}</span>
               <div>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                  todayRoast.severity === "brutal" ? "bg-red-500/15 text-red-400" : "bg-amber-500/15 text-amber-400"
-                }`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${todayRoast.severity === "brutal" ? "bg-red-500/15 text-red-400" : "bg-amber-500/15 text-amber-400"
+                  }`}>
                   {user?.roastLevel || todayRoast.severity} mode
                 </span>
                 <p className="text-[11px] text-zinc-500 mt-1">{todayRoast.category}</p>
@@ -262,9 +262,8 @@ export default function DailyRoastPage() {
       {/* ─── Action Buttons ─── */}
       <div className="flex flex-wrap items-center gap-3">
         <button onClick={() => setLiked(!liked)}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border text-[13px] font-semibold transition-all ${
-            liked ? "border-red-500/30 bg-red-500/10 text-red-400" : "border-[var(--color-border)] text-[var(--color-muted-foreground)] hover:border-red-500/20 hover:text-red-400"
-          }`}>
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border text-[13px] font-semibold transition-all ${liked ? "border-red-500/30 bg-red-500/10 text-red-400" : "border-[var(--color-border)] text-[var(--color-muted-foreground)] hover:border-red-500/20 hover:text-red-400"
+            }`}>
           <Heart className={`w-4 h-4 ${liked ? "fill-red-400" : ""}`} /> {liked ? "Loved!" : "Love it"}
         </button>
 
@@ -335,9 +334,8 @@ export default function DailyRoastPage() {
                 <p className="text-[12px] text-[var(--color-foreground)] leading-relaxed line-clamp-2">&ldquo;{roast.roast}&rdquo;</p>
                 <div className="flex items-center gap-2 mt-1.5">
                   <span className="text-[10px] text-[var(--color-muted-foreground)]">{roast.category}</span>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
-                    roast.severity === "brutal" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"
-                  }`}>{roast.severity}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase ${roast.severity === "brutal" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"
+                    }`}>{roast.severity}</span>
                 </div>
               </div>
               <button className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-muted-foreground)] hover:text-orange-400">

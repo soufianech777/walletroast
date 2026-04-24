@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
-import { Trophy, Crown, Medal, Flame, TrendingUp, TrendingDown, Zap, ArrowLeft, Star } from "lucide-react"
+import { Trophy, Crown, Flame, TrendingUp, TrendingDown, Zap, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { getUser, getSocialPosts, seedSocialDemoData } from "@/lib/store"
 import { generateLeaderboard, getTotalReactions, AVATAR_GRADIENTS } from "@/lib/engines/roast-social-engine"

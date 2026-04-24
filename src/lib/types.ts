@@ -160,6 +160,7 @@ export interface RoastCard {
   commentsDisabled: boolean
   createdAt: string
   reactions: Record<string, string[]>
+  reactionsJson?: string
   shareCount: number
 }
 
@@ -172,6 +173,7 @@ export interface SocialComment {
   text: string
   createdAt: string
   reactions: Record<string, string[]>
+  reactionsJson?: string
   parentId: string | null
 }
 
@@ -183,6 +185,7 @@ export interface SocialProfile {
   score: number
   streak: number
   badges: string[]
+  badgesJson?: string
   postCount: number
 }
 

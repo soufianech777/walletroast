@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  clerkId            String?  @unique
+  name               String
+  email              String   @unique
+  phone              String?
+  profilePhoto       String?
+  bio                String?
+  location           String?
+  dateOfBirth        String?
+  twoFactorEnabled   Boolean  @default(false)
+  twoFactorVerified  Boolean  @default(false)
+  currency           String   @default("USD")
+  monthlyIncome      Float    @default(0)
+  roastLevel         String   @default("direct")
+  savingsGoal        Float    @default(0)
+  subscriptionPlan   String   @default("free")
+  onboardingComplete Boolean  @default(false)
+
+  employmentStatus   String?
+  industry           String?
+  housingStatus      String?
+  financialGoal      String?
+  monthlyExpenses    Float?
+  dependents         Int?
+  hasEmergencyFund   Boolean?
+  paymentMethod      String?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  categories         Category[]
+  budgets            Budget[]
+  expenses           Expense[]
+  goals              Goal[]
+  insights           Insight[]
+  notifications      Notification[]
+  socialProfile      SocialProfile?
+  roastCards         RoastCard[]
+  socialComments     SocialComment[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  icon      String
+  color     String
+  isDefault Boolean  @default(false)
+
+  budgets   Budget[]
+  expenses  Expense[]
+}
+
+model Budget {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  monthlyLimit Float
+}
+
+model Expense {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  amount        Float
+  note          String
+  expenseDate   DateTime
+  isRecurring   Boolean  @default(false)
+  recurringType String?  // "daily" | "weekly" | "monthly" | null
+}
+
+model Goal {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  targetAmount Float
+  savedAmount  Float    @default(0)
+  deadline     DateTime
+}
+
+model Insight {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type             String
+  severity         String
+  title            String
+  message          String
+  generatedForDate DateTime
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String
+  body       String
+  readStatus Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model RoastCard {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username             String
+  avatarGradient       Int
+  disciplineScore      Int
+  biggestWasteCategory String
+  biggestWasteIcon     String
+  wastedAmount         Float
+  roastMessage         String
+  roastLevel           String
+  streak               Int
+  isAnonymous          Boolean  @default(false)
+  isPublic             Boolean  @default(true)
+  commentsDisabled     Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  
+  reactionsJson        String   @default("{}")
+  shareCount           Int      @default(0)
+
+  comments             SocialComment[]
+}
+
+model SocialComment {
+  id             String    @id @default(cuid())
+  postId         String
+  post           RoastCard @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username       String
+  avatarGradient Int
+  text           String
+  createdAt      DateTime  @default(now())
+  
+  reactionsJson  String    @default("{}")
+  parentId       String?
+}
+
+model SocialProfile {
+  userId         String   @id
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName    String
+  bio            String
+  avatarGradient Int
+  score          Int      @default(0)
+  streak         Int      @default(0)
+  badgesJson     String   @default("[]")
+  postCount      Int      @default(0)
+}

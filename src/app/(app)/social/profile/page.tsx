@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
-import { Edit3, Save, Award, Flame, ArrowLeft, Star, Crown } from "lucide-react"
+import { Edit3, Save, Award, Flame, ArrowLeft, Crown } from "lucide-react"
 import Link from "next/link"
 import { getUser, getSocialPosts, saveSocialProfile, initSocialProfile, seedSocialDemoData, getSocialComments } from "@/lib/store"
 import { getTotalReactions, AVATAR_GRADIENTS } from "@/lib/engines/roast-social-engine"
@@ -55,7 +55,7 @@ export default function ProfilePage() {
   const [editName, setEditName] = useState("")
   const [editBio, setEditBio] = useState("")
 
-  useEffect(() => { // eslint-disable-line react-hooks/set-state-in-effect
+  useEffect(() => {
     const u = getUser()
     if (!u) return
     setUser(u)
@@ -204,36 +204,48 @@ export default function ProfilePage() {
       </motion.div>
 
       {/* Badges */}
-      <motion.div variants={fadeUp} className="glass-card rounded-2xl p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
-            <Award className="w-4 h-4 text-amber-400" />
+      {user.subscriptionPlan === "pro" ? (
+        <motion.div variants={fadeUp} className="glass-card rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <Award className="w-4 h-4 text-amber-400" />
+            </div>
+            <h3 className="font-bold text-[15px]">Badges</h3>
           </div>
-          <h3 className="font-bold text-[15px]">Badges</h3>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {SOCIAL_BADGES.map(badge => {
-            const earned = earnedBadges.includes(badge.id)
-            return (
-              <div key={badge.id}
-                className={`p-4 rounded-xl border transition-all ${
-                  earned
-                    ? "bg-[var(--color-secondary)]/80 border-orange-500/20 badge-shine"
-                    : "border-[var(--color-border)] opacity-40"
-                }`}>
-                <div className="text-2xl mb-2">{badge.icon}</div>
-                <p className={`font-bold text-[13px] ${earned ? "" : "text-[var(--color-muted-foreground)]"}`}>{badge.label}</p>
-                <p className="text-[11px] text-[var(--color-muted-foreground)] mt-0.5">{badge.description}</p>
-                {earned && (
-                  <span className="inline-block mt-2 px-2 py-0.5 rounded-md bg-emerald-500/10 text-[9px] font-bold text-emerald-400 border border-emerald-500/20">
-                    ✓ EARNED
-                  </span>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </motion.div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {SOCIAL_BADGES.map(badge => {
+              const earned = earnedBadges.includes(badge.id)
+              return (
+                <div key={badge.id}
+                  className={`p-4 rounded-xl border transition-all ${earned
+                      ? "bg-[var(--color-secondary)]/80 border-orange-500/20 badge-shine"
+                      : "border-[var(--color-border)] opacity-40"
+                    }`}>
+                  <div className="text-2xl mb-2">{badge.icon}</div>
+                  <p className={`font-bold text-[13px] ${earned ? "" : "text-[var(--color-muted-foreground)]"}`}>{badge.label}</p>
+                  <p className="text-[11px] text-[var(--color-muted-foreground)] mt-0.5">{badge.description}</p>
+                  {earned && (
+                    <span className="inline-block mt-2 px-2 py-0.5 rounded-md bg-emerald-500/10 text-[9px] font-bold text-emerald-400 border border-emerald-500/20">
+                      ✓ EARNED
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div variants={fadeUp} className="glass-card rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+          <Crown className="w-8 h-8 text-amber-400 mb-3 opacity-50" />
+          <h3 className="font-bold text-[15px] mb-1">Badges Locked</h3>
+          <p className="text-[13px] text-[var(--color-muted-foreground)] max-w-sm mb-4">
+            Upgrade to Pro to unlock social badges and show off your financial discipline to the community.
+          </p>
+          <Link href="/settings" className="btn-primary px-4 py-2 rounded-xl text-[12px] font-semibold flex items-center gap-1.5">
+            <Crown className="w-3.5 h-3.5" /> Upgrade to Pro
+          </Link>
+        </motion.div>
+      )}
 
       {/* User's Posts */}
       <motion.div variants={fadeUp} className="glass-card rounded-2xl p-6">

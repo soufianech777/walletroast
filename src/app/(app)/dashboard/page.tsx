@@ -87,7 +87,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const u = getUser()
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     if (u) setUser(u)
     setMounted(true)
   }, [])

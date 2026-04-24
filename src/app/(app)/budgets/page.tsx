@@ -23,7 +23,7 @@ export default function BudgetsPage() {
 
   useEffect(() => {
     const u = getUser()
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     if (u) setUser(u)
     setCategories(getCategories())
     setBudgets(getBudgets())

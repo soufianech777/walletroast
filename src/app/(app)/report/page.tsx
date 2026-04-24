@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
 import {
-  Calendar, TrendingDown, TrendingUp, DollarSign, Flame,
+  Calendar, TrendingDown, DollarSign, Flame,
   ArrowUpRight, ArrowDownRight, BarChart3, Zap, Target, ChevronRight
 } from "lucide-react"
 import { getUser, getExpenses, getBudgets, getCategories } from "@/lib/store"
@@ -91,7 +91,7 @@ export default function ReportPage() {
     return <div className="space-y-5">{[1,2,3].map(i => <div key={i} className="h-36 bg-[var(--color-secondary)] rounded-2xl animate-pulse" />)}</div>
   }
 
-  const gradeColor = { A: "text-emerald-400", B: "text-blue-400", C: "text-amber-400", D: "text-orange-400", F: "text-red-400" }
+
 
   return (
     <motion.div className="space-y-6" initial="hidden" animate="visible" variants={stagger}>

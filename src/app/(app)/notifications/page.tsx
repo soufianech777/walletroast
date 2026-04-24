@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Bell, BellOff, Flame, DollarSign, TrendingDown, ShieldAlert,
-  Target, Trophy, MessageCircle, Settings, Check, CheckCheck,
-  Trash2, Filter, Clock
+  Bell, BellOff, Flame, DollarSign, ShieldAlert,
+  Target, Trophy, MessageCircle, Settings, CheckCheck,
+  Trash2, Clock
 } from "lucide-react"
 import { getUser } from "@/lib/store"
 
@@ -46,7 +46,7 @@ const demoNotifications: Notification[] = [
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>(demoNotifications)
   const [filter, setFilter] = useState<"all" | NotifType>("all")
-  const [user, setUser] = useState<ReturnType<typeof getUser>>(null)
+  const [, setUser] = useState<ReturnType<typeof getUser>>(null)
   const [pushEnabled, setPushEnabled] = useState(true)
 
   useEffect(() => {
@@ -140,7 +140,7 @@ export default function NotificationsPage() {
             { label: "Achievements", emoji: "🏆", desc: "Badges & milestones", enabled: true },
             { label: "Spending Alerts", emoji: "⚠️", desc: "Unusual spending", enabled: true },
             { label: "Smart Tips", emoji: "💡", desc: "Saving suggestions", enabled: false },
-          ].map((pref, i) => (
+          ].map((pref) => (
             <button key={pref.label}
               className={`p-3 rounded-xl border text-left transition-all hover:-translate-y-0.5 ${
                 pref.enabled ? "border-orange-500/20 bg-orange-500/[0.04]" : "border-[var(--color-border)] bg-[var(--color-secondary)]"
