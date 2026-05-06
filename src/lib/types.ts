@@ -201,3 +201,34 @@ export const SOCIAL_BADGES: { id: string; icon: string; label: string; descripti
   { id: "streak_warrior", icon: "🔄", label: "3-Week Streak", description: "Posted roasts 3 weeks in a row" },
   { id: "social_butterfly", icon: "💬", label: "Social Butterfly", description: "Left 10+ comments" },
 ]
+
+// ─── Achievement & Progression Types ───
+
+export type AchievementTier = "bronze" | "silver" | "gold" | "diamond" | "legendary"
+export type AchievementRarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "secret"
+
+export interface Achievement {
+  id: string
+  name: string
+  tier: AchievementTier
+  rarity: AchievementRarity
+  emoji: string
+  unlockMessage: string
+  roast: string
+  xpReward: number
+  nextGoal: string | null
+  category: string
+  isSecret: boolean
+  unlockedAt: string | null
+  progress: number // 0-100
+}
+
+export interface AchievementResult {
+  unlocked: Achievement[]
+  locked: Achievement[]
+  totalXp: number
+  level: number
+  levelProgress: number // 0-100 to next level
+  totalUnlocked: number
+  newlyUnlockedIds?: string[] // For triggering animations
+}

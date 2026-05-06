@@ -256,7 +256,7 @@ export default function LeaksPage() {
       {leakData.leaks.length > 0 ? (
         <div className="space-y-4">
           {leakData.leaks.map((leak, i) => (
-            <LeakCard key={leak.id} leak={leak} currency={user.currency} index={i} />
+            <LeakCard key={leak.id} leak={leak} currency={user.currency} _index={i} />
           ))}
         </div>
       ) : (

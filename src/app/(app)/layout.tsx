@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Flame, LayoutDashboard, Receipt, PieChart, Lightbulb,
   Target, Settings, LogOut, Menu, X, Bell, Sun, Moon, ShieldAlert, FileBarChart, Users,
-  ChevronLeft, ChevronRight, MessageCircle, Crown
+  ChevronLeft, ChevronRight, MessageCircle, Crown, Trophy
 } from "lucide-react"
 import { getUser, getNotifications, markAllNotificationsRead, ensureStoreInitialized, isStoreInitialized, subscribe } from "@/lib/store"
 
@@ -24,6 +24,7 @@ const socialItem = { href: "/social", label: "Roast Social", icon: MessageCircle
 const navItemsBottom = [
   { href: "/leaks", label: "Money Leaks", icon: ShieldAlert },
   { href: "/report", label: "Weekly Report", icon: FileBarChart },
+  { href: "/achievements", label: "Achievements", icon: Trophy },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/settings", label: "Settings", icon: Settings },
 ]

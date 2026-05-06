@@ -4,10 +4,11 @@ import { useState, useEffect, useMemo, useRef } from "react"
 import { motion, useInView } from "framer-motion"
 import {
   DollarSign, TrendingDown, AlertTriangle, Flame, ArrowRight,
-  TrendingUp, Wallet, BarChart3, Zap, Plus, Sparkles, ShieldAlert, FileBarChart, Users
+  TrendingUp, Wallet, BarChart3, Zap, Plus, Sparkles, ShieldAlert, FileBarChart, Users, Trophy
 } from "lucide-react"
-import { getUser, getCurrentMonthExpenses, getBudgets, getGoals, getCategories, getExpenses } from "@/lib/store"
+import { getUser, getCurrentMonthExpenses, getBudgets, getGoals, getCategories, getExpenses, getSocialPosts, getSocialComments } from "@/lib/store"
 import { generateInsights } from "@/lib/engines/insight-engine"
+import { computeAchievements } from "@/lib/engines/achievement-engine"
 import { calculateDisciplineScore } from "@/lib/engines/discipline-score"
 import { calculateProjection } from "@/lib/engines/projection-engine"
 import { detectMoneyLeaks } from "@/lib/engines/leak-detector"
@@ -144,6 +145,8 @@ export default function DashboardPage() {
     const budgets = getBudgets()
     const goals = getGoals()
     const allExpenses = getExpenses()
+    const posts = getSocialPosts()
+    const comments = getSocialComments()
 
     const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0)
     const remainingBalance = user.monthlyIncome - totalSpent
@@ -172,8 +175,9 @@ export default function DashboardPage() {
     const projection = calculateProjection(totalSpent, user.monthlyIncome, user.roastLevel, user.savingsGoal)
     const leakData = detectMoneyLeaks(allExpenses, categories, user.currency)
     const weeklyReport = generateWeeklyReport(allExpenses, categories, budgets, user.monthlyIncome, user.roastLevel, scoreData.score)
+    const achievements = computeAchievements(allExpenses, categories, budgets, goals, user, posts, comments)
 
-    return { totalSpent, remainingBalance, moneyWasted, savedTotal, catSpending, insights, scoreData, projection, expenses, leakData, weeklyReport }
+    return { totalSpent, remainingBalance, moneyWasted, savedTotal, catSpending, insights, scoreData, projection, expenses, leakData, weeklyReport, achievements }
   }, [user, mounted])
 
   if (!mounted || !user || !data) {
@@ -456,6 +460,35 @@ export default function DashboardPage() {
                 </p>
               </div>
               <ArrowRight className="w-5 h-5 text-[var(--color-muted-foreground)] group-hover:text-orange-400 group-hover:translate-x-1 transition-all shrink-0" />
+            </div>
+          </div>
+        </Link>
+      </motion.div>
+
+      {/* ─── Achievements Card ─── */}
+      <motion.div variants={fadeUp}>
+        <Link href="/achievements" className="block">
+          <div className="glass-card rounded-2xl p-5 sm:p-6 hover:border-indigo-500/20 transition-all duration-300 hover:-translate-y-0.5 group cursor-pointer overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/15 to-purple-500/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-indigo-500/20 shadow-inner">
+                <Trophy className="w-6 h-6 text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <h3 className="font-bold text-[14px]">Level {data.achievements.level} Roast Master</h3>
+                  <span className="px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 rounded-md text-[10px] font-bold text-indigo-400">
+                    {data.achievements.totalUnlocked} Badges
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 mt-1.5">
+                  <div className="flex-1 h-1.5 bg-[var(--color-secondary)] rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${data.achievements.levelProgress}%` }} />
+                  </div>
+                  <span className="text-[10px] font-medium text-[var(--color-muted-foreground)]">{data.achievements.levelProgress}%</span>
+                </div>
+              </div>
+              <ArrowRight className="w-5 h-5 text-[var(--color-muted-foreground)] group-hover:text-indigo-400 group-hover:translate-x-1 transition-all shrink-0" />
             </div>
           </div>
         </Link>

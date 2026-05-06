@@ -52,8 +52,8 @@ export async function ensureStoreInitialized() {
           STATE.expenses = exp as Expense[];
           STATE.budgets = bdg as Budget[];
           STATE.goals = gls as Goal[];
-          STATE.posts = pts as RoastCard[];
-          STATE.comments = cmt as SocialComment[];
+          STATE.posts = pts as unknown as RoastCard[];
+          STATE.comments = cmt as unknown as SocialComment[];
           STATE.profile = prf as SocialProfile | null;
           STATE.notifications = notif as Notification[];
         }
@@ -224,7 +224,7 @@ export function addSocialPost(data: Omit<RoastCard, "id" | "userId" | "createdAt
   STATE.posts.unshift(temp);
   actions.addSocialPost(data).then(real => {
     const idx = STATE.posts.findIndex(p => p.id === temp.id);
-    if (idx !== -1) STATE.posts[idx] = real as RoastCard;
+    if (idx !== -1) STATE.posts[idx] = real as unknown as RoastCard;
     notify();
   });
   notify();
@@ -266,7 +266,7 @@ export function addSocialComment(comment: Omit<SocialComment, "id" | "createdAt"
   STATE.comments.unshift(temp);
   actions.addSocialComment(comment).then(real => {
     const idx = STATE.comments.findIndex(c => c.id === temp.id);
-    if (idx !== -1) STATE.comments[idx] = real as SocialComment;
+    if (idx !== -1) STATE.comments[idx] = real as unknown as SocialComment;
   });
   notify();
 }
