@@ -10,6 +10,7 @@ import {
   ChevronLeft, ChevronRight, MessageCircle, Crown, Trophy
 } from "lucide-react"
 import { getUser, getNotifications, markAllNotificationsRead, ensureStoreInitialized, isStoreInitialized, subscribe } from "@/lib/store"
+import { useUser } from "@clerk/nextjs"
 
 const navItemsTop = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -32,6 +33,7 @@ const navItemsBottom = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { user: clerkUser, isLoaded: clerkLoaded } = useUser()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null)
@@ -402,6 +404,46 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </main>
+      {/* ─── Verification Required Overlay ─── */}
+      <AnimatePresence>
+        {clerkLoaded && clerkUser && !clerkUser.primaryEmailAddress?.verification.status.includes("verified") && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xl flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="glass-card max-w-md w-full p-8 rounded-3xl border border-orange-500/20 text-center shadow-2xl shadow-orange-500/10"
+            >
+              <div className="w-20 h-20 rounded-2xl bg-orange-500/10 flex items-center justify-center mx-auto mb-6">
+                <ShieldAlert className="w-10 h-10 text-orange-400" />
+              </div>
+              <h2 className="text-2xl font-bold mb-3 tracking-tight">Identity Verification Required</h2>
+              <p className="text-[14px] text-[var(--color-muted-foreground)] leading-relaxed mb-8">
+                To keep WalletRoast a secure community, we need you to verify your email. Check your inbox for the verification link or code.
+              </p>
+              
+              <div className="space-y-4">
+                <Link href="/settings" 
+                  className="block w-full py-4 btn-primary rounded-2xl text-[14px] font-bold shadow-lg shadow-orange-500/20">
+                  Go to Settings to Verify
+                </Link>
+                <button onClick={() => window.location.reload()}
+                  className="text-[13px] text-[var(--color-muted-foreground)] hover:text-orange-400 transition-colors font-medium">
+                  I've verified, reload the page
+                </button>
+              </div>
+              
+              <div className="mt-8 pt-6 border-t border-[var(--color-border)]/50">
+                <button onClick={() => { localStorage.clear(); window.location.href = "/" }}
+                  className="text-[12px] text-red-400/80 hover:text-red-400 font-bold uppercase tracking-widest">
+                  Sign Out
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

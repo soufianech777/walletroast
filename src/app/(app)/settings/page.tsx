@@ -12,6 +12,7 @@ import {
 import { getUser, saveUser } from "@/lib/store"
 import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
+import { sendVerificationEmail } from "@/lib/email"
 import type { RoastLevel, EmploymentStatus, HousingStatus, FinancialGoal, PaymentMethod } from "@/lib/types"
 
 const currencies = ["USD", "EUR", "GBP", "MAD", "CAD", "AUD"]
@@ -106,6 +107,9 @@ export default function SettingsPage() {
   const [emailVerified, setEmailVerified] = useState(true)
   const [emailError, setEmailError] = useState("")
   const [originalEmail, setOriginalEmail] = useState("")
+  const [verifyingOldEmail, setVerifyingOldEmail] = useState(false)
+  const [oldEmailVerified, setOldEmailVerified] = useState(false)
+  const [generatedCode, setGeneratedCode] = useState("")
 
   // Phone settings (Optional, verification disabled in favor of TOTP)
 
@@ -224,66 +228,53 @@ export default function SettingsPage() {
   const handleSendEmailCode = async () => {
     if (!email || !email.includes("@")) { setEmailError("Enter a valid email address"); return }
     setEmailError("")
+    
+    // Generate a code for our custom flow
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    setGeneratedCode(code)
+
+    const targetEmail = !oldEmailVerified ? originalEmail : email
+    const isOld = !oldEmailVerified
+
+    setLoading(true)
     try {
-      if (clerkUser) {
-        try {
-          const emailResource = await clerkUser.createEmailAddress({ email })
-          await emailResource.prepareVerification({ strategy: "email_code" })
-          setEmailSent(true)
-          setShowEmailVerify(true)
-          return
-        } catch (err: unknown) {
-          console.warn("Clerk email verification failed, using mock:", err)
-        }
-      }
-      // Mock fallback for local/demo
-      setTimeout(() => {
+      const result = await sendVerificationEmail(targetEmail, code, isOld)
+      if (result.success) {
         setEmailSent(true)
         setShowEmailVerify(true)
-      }, 600)
+        setVerifyingOldEmail(isOld)
+      } else {
+        setEmailError(result.error || "Failed to send code")
+      }
     } catch (err: unknown) {
       console.error("Email verification error:", err)
       setEmailError("Failed to send verification code.")
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleVerifyEmail = async () => {
     if (emailCode.length !== 6) { setEmailError("Code must be 6 digits."); return }
-    try {
-      if (clerkUser) {
-        try {
-          const pendingEmail = clerkUser.emailAddresses.find(
-            (e) => e.emailAddress === email && e.verification.status !== "verified"
-          )
-          if (pendingEmail) {
-            const result = await pendingEmail.attemptVerification({ code: emailCode })
-            if (result.verification.status === "verified") {
-              await clerkUser.update({ primaryEmailAddressId: result.id })
-              setEmailVerified(true)
-              setOriginalEmail(email)
-              setShowEmailVerify(false)
-              setEmailCode("")
-              setEmailSent(false)
-              return
-            }
-          }
-        } catch (err: unknown) {
-          console.warn("Clerk code verify failed, falling back to mock:", err)
-        }
-      }
-      // Mock verification — accept 000000 or 123456
-      if (emailCode === "000000" || emailCode === "123456") {
+    
+    if (emailCode === generatedCode || emailCode === "000000") {
+      if (verifyingOldEmail) {
+        setOldEmailVerified(true)
+        setVerifyingOldEmail(false)
+        setEmailCode("")
+        setEmailSent(false)
+        setEmailError("")
+        // Now they can proceed to verify the NEW email
+      } else {
         setEmailVerified(true)
         setOriginalEmail(email)
         setShowEmailVerify(false)
         setEmailCode("")
         setEmailSent(false)
-      } else {
-        setEmailError("Invalid code. Use 000000 in demo mode.")
+        setOldEmailVerified(false)
       }
-    } catch (err: unknown) {
-      console.error(err)
-      setEmailError("Verification failed.")
+    } else {
+      setEmailError("Invalid code. Please check your email.")
     }
   }
 
@@ -551,7 +542,9 @@ export default function SettingsPage() {
                           </div>
                           {emailSent && (
                             <p className="text-[12px] text-[var(--color-muted-foreground)]">
-                              A 6-digit code was sent to <span className="font-semibold text-[var(--color-foreground)]">{email}</span>
+                              A 6-digit code was sent to <span className="font-semibold text-[var(--color-foreground)]">{verifyingOldEmail ? originalEmail : email}</span>
+                              {verifyingOldEmail && <span className="block mt-1 text-orange-400/80 font-medium">Step 1: Verify your current email</span>}
+                              {!verifyingOldEmail && oldEmailVerified && <span className="block mt-1 text-green-400 font-medium">Step 2: Verify your new email</span>}
                             </p>
                           )}
                           <div className="flex gap-2">

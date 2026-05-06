@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { useSignUp } from "@clerk/nextjs/legacy"
 import { Flame, Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Shield, Zap, AlertCircle } from "lucide-react"
+import { sendVerificationEmail } from "@/lib/email"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -19,6 +20,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [pendingVerification, setPendingVerification] = useState(false)
   const [verificationCode, setVerificationCode] = useState("")
+  const [generatedCode, setGeneratedCode] = useState("")
 
   const handleGoogleSignUp = async () => {
     if (!isLoaded || !signUp) {
@@ -74,8 +76,14 @@ export default function RegisterPage() {
         password: password,
       })
 
-      // Send email verification code
+      // Send email verification code via Clerk (for backend)
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" })
+      
+      // Also send our premium custom email via Resend
+      const customCode = Math.floor(100000 + Math.random() * 900000).toString()
+      setGeneratedCode(customCode)
+      await sendVerificationEmail(email, customCode)
+
       setPendingVerification(true)
     } catch (err: unknown) {
       console.error("Sign-up error:", err)
@@ -110,6 +118,16 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
+      // Check our custom generated code first
+      const isCustomMatch = verificationCode === generatedCode;
+      
+      if (isCustomMatch) {
+        // If they enter our premium code, we let them know it's verified locally, 
+        // but Clerk still needs its own verification for session management.
+        // In a real app with a custom domain, you would sync these.
+        console.log("Custom code verified. Proceeding with Clerk...")
+      }
+
       const result = await signUp.attemptEmailAddressVerification({
         code: verificationCode,
       })
@@ -254,28 +272,36 @@ export default function RegisterPage() {
             </motion.div>
           )}
 
-          {pendingVerification ? (
             /* ─── Verification Form ─── */
-            <form onSubmit={handleVerification} className="space-y-5">
+            <form onSubmit={handleVerification} className="space-y-6">
+              <div className="bg-orange-500/5 border border-orange-500/10 rounded-2xl p-4 mb-6">
+                <p className="text-[12px] text-orange-400 font-medium italic flex items-start gap-2">
+                  <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  "Verify your account before you spend another $40 on 'emergency' Uber Eats."
+                </p>
+              </div>
+
               <div>
-                <label className="block text-[12px] text-[var(--color-muted-foreground)] mb-2 font-semibold uppercase tracking-[0.05em]">Verification Code</label>
+                <label className="block text-[11px] text-[var(--color-muted-foreground)] mb-3 font-bold uppercase tracking-[0.1em]">Verification Code</label>
                 <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-muted-foreground)] group-focus-within:text-orange-400 transition-colors" />
                   <input
                     type="text"
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value)}
-                    placeholder="Enter 6-digit code"
-                    className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-[var(--color-secondary)] border border-[var(--color-border)] text-[14px] placeholder:text-[var(--color-muted-foreground)]/50 focus:outline-none focus:border-orange-500/40 focus:ring-2 focus:ring-orange-500/10 transition-all tracking-[0.2em] text-center text-lg font-mono"
+                    placeholder="000000"
+                    className="w-full px-4 py-5 rounded-2xl bg-[var(--color-secondary)] border border-[var(--color-border)] text-[2rem] tracking-[0.4em] font-black text-center focus:outline-none focus:border-orange-500/40 focus:ring-4 focus:ring-orange-500/5 transition-all placeholder:text-[var(--color-muted-foreground)]/20"
                     required
                     maxLength={6}
                     autoFocus
                   />
                 </div>
+                <p className="mt-3 text-[11px] text-[var(--color-muted-foreground)] text-center">
+                  Check your inbox for the 6-digit code. Don't share it unless you want someone else roasting your spending.
+                </p>
               </div>
 
               <button type="submit" disabled={loading || verificationCode.length < 6}
-                className="w-full py-3.5 btn-primary rounded-xl text-[14px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 group">
+                className="w-full py-4 btn-primary rounded-2xl text-[14px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 group shadow-lg shadow-orange-500/20">
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
@@ -283,23 +309,26 @@ export default function RegisterPage() {
                   </span>
                 ) : (
                   <>
-                    Verify & Continue
+                    Confirm Identity
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setPendingVerification(false)
-                  setVerificationCode("")
-                  setError("")
-                }}
-                className="w-full text-center text-[13px] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
-              >
-                ← Back to sign up
-              </button>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingVerification(false)
+                    setVerificationCode("")
+                    setError("")
+                  }}
+                  className="w-full text-center text-[13px] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors flex items-center justify-center gap-2"
+                >
+                  <ArrowRight className="w-4 h-4 rotate-180" />
+                  Use a different email
+                </button>
+              </div>
             </form>
           ) : (
             /* ─── Registration Form ─── */
