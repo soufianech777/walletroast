@@ -174,7 +174,7 @@ export default function ProfilePage() {
                     {user.roastLevel === "soft" ? "😊" : user.roastLevel === "direct" ? "😐" : "🔥"} {user.roastLevel.charAt(0).toUpperCase() + user.roastLevel.slice(1)} Mode
                   </span>
                   <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/15 text-[11px] font-bold text-emerald-400">
-                    Member since {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                    Member since {user.createdAt && !isNaN(new Date(user.createdAt).getTime()) ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                   </span>
                 </div>
               </>
