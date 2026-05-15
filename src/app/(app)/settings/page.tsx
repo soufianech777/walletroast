@@ -71,6 +71,7 @@ export default function SettingsPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
+  const [countryCode, setCountryCode] = useState("+1")
   const [bio, setBio] = useState("")
   const [location, setLocation] = useState("")
   const [dateOfBirth, setDateOfBirth] = useState("")
@@ -133,7 +134,17 @@ export default function SettingsPage() {
       setUser(u)
       setName(u.name)
       setEmail(u.email)
-      setPhone(u.phone || "")
+      if (u.phone) {
+        const parts = u.phone.split(" ")
+        if (parts.length > 1 && parts[0].startsWith("+")) {
+          setCountryCode(parts[0])
+          setPhone(parts.slice(1).join(" "))
+        } else {
+          setPhone(u.phone)
+        }
+      } else {
+        setPhone("")
+      }
       setBio(u.bio || "")
       setLocation(u.location || "")
       setDateOfBirth(u.dateOfBirth || "")
@@ -192,7 +203,7 @@ export default function SettingsPage() {
   const handleSave = () => {
     if (!user) return
     const updated = {
-      ...user, name, email, phone, bio, location, dateOfBirth, profilePhoto,
+      ...user, name, email, phone: phone ? `${countryCode} ${phone}` : "", bio, location, dateOfBirth, profilePhoto,
       currency, monthlyIncome: Number(monthlyIncome), savingsGoal: Number(savingsGoal),
       roastLevel, twoFactorEnabled,
       employmentStatus: employmentStatus || undefined,
@@ -590,9 +601,29 @@ export default function SettingsPage() {
                 Phone Number <span className="ml-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-secondary)] text-[var(--color-muted-foreground)]">OPTIONAL</span>
               </h2>
               <div className="space-y-3">
-                <div className="flex gap-3">
+                <div className="flex gap-2">
+                  <div className="relative shrink-0">
+                    <select
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="input-premium appearance-none pr-8 pl-3 w-[100px] font-medium text-[13px] h-full"
+                    >
+                      <option value="+1">🇺🇸 +1</option>
+                      <option value="+44">🇬🇧 +44</option>
+                      <option value="+33">🇫🇷 +33</option>
+                      <option value="+49">🇩🇪 +49</option>
+                      <option value="+212">🇲🇦 +212</option>
+                      <option value="+91">🇮🇳 +91</option>
+                      <option value="+61">🇦🇺 +61</option>
+                      <option value="+81">🇯🇵 +81</option>
+                      <option value="+55">🇧🇷 +55</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-muted-foreground)]">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                  </div>
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-                    className="flex-1 input-premium" placeholder="+1 (555) 000-0000" />
+                    className="flex-1 input-premium" placeholder="(555) 000-0000" />
                 </div>
                 <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl">
                   <p className="text-[11px] text-blue-400"><strong>Note:</strong> We use your Email and Authenticator App (TOTP) for 2FA and recovery. A phone number is optional for extra account context.</p>
