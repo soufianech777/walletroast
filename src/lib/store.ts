@@ -240,7 +240,7 @@ export function toggleReaction(postId: string, emoji: string, userId: string): v
   if (!post) return;
   // Local optimisitc
   let reactions: Record<string, string[]> = {};
-  try { reactions = JSON.parse(post.reactionsJson || "{}"); } catch (e) { }
+  try { reactions = JSON.parse(post.reactionsJson || "{}"); } catch { }
   if (!reactions[emoji]) reactions[emoji] = [];
   const idx = reactions[emoji].indexOf(userId);
   if (idx >= 0) reactions[emoji].splice(idx, 1);
@@ -280,7 +280,7 @@ export function toggleCommentReaction(commentId: string, emoji: string, userId: 
   const comment = STATE.comments.find(c => c.id === commentId);
   if (!comment) return;
   let reactions: Record<string, string[]> = {};
-  if (comment.reactionsJson) try { reactions = JSON.parse(comment.reactionsJson); } catch (e) { }
+  if (comment.reactionsJson) try { reactions = JSON.parse(comment.reactionsJson); } catch { }
   if (!reactions[emoji]) reactions[emoji] = [];
   const idx = reactions[emoji].indexOf(userId);
   if (idx >= 0) reactions[emoji].splice(idx, 1);

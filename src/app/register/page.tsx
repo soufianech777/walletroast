@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { useSignUp } from "@clerk/nextjs/legacy"
 import { Flame, Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Shield, Zap, AlertCircle } from "lucide-react"
-import { sendVerificationEmail } from "@/lib/email"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -20,7 +19,6 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [pendingVerification, setPendingVerification] = useState(false)
   const [verificationCode, setVerificationCode] = useState("")
-  const [generatedCode, setGeneratedCode] = useState("")
 
   const handleGoogleSignUp = async () => {
     if (!isLoaded || !signUp) {
@@ -78,11 +76,6 @@ export default function RegisterPage() {
 
       // Send email verification code via Clerk (for backend)
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" })
-      
-      // Also send our premium custom email via Resend
-      const customCode = Math.floor(100000 + Math.random() * 900000).toString()
-      setGeneratedCode(customCode)
-      await sendVerificationEmail(email, customCode)
 
       setPendingVerification(true)
     } catch (err: unknown) {
@@ -118,16 +111,6 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      // Check our custom generated code first
-      const isCustomMatch = verificationCode === generatedCode;
-      
-      if (isCustomMatch) {
-        // If they enter our premium code, we let them know it's verified locally, 
-        // but Clerk still needs its own verification for session management.
-        // In a real app with a custom domain, you would sync these.
-        console.log("Custom code verified. Proceeding with Clerk...")
-      }
-
       const result = await signUp.attemptEmailAddressVerification({
         code: verificationCode,
       })
@@ -271,13 +254,12 @@ export default function RegisterPage() {
               <p className="text-[13px] text-red-400 leading-relaxed">{error}</p>
             </motion.div>
           )}
-
-            /* ─── Verification Form ─── */
+          {pendingVerification ? (
             <form onSubmit={handleVerification} className="space-y-6">
               <div className="bg-orange-500/5 border border-orange-500/10 rounded-2xl p-4 mb-6">
                 <p className="text-[12px] text-orange-400 font-medium italic flex items-start gap-2">
                   <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                  "Verify your account before you spend another $40 on 'emergency' Uber Eats."
+                  &quot;Verify your account before you spend another $40 on &apos;emergency&apos; Uber Eats.&quot;
                 </p>
               </div>
 
@@ -296,7 +278,7 @@ export default function RegisterPage() {
                   />
                 </div>
                 <p className="mt-3 text-[11px] text-[var(--color-muted-foreground)] text-center">
-                  Check your inbox for the 6-digit code. Don't share it unless you want someone else roasting your spending.
+                  Check your inbox for the 6-digit code. Don&apos;t share it unless you want someone else roasting your spending.
                 </p>
               </div>
 

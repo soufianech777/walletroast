@@ -44,7 +44,7 @@ function getQrCodeUrl(data: string): string {
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { user: clerkUser } = useUser()
+  const { } = useUser()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null)
   const [mounted, setMounted] = useState(false)
@@ -110,6 +110,7 @@ export default function SettingsPage() {
   const [verifyingOldEmail, setVerifyingOldEmail] = useState(false)
   const [oldEmailVerified, setOldEmailVerified] = useState(false)
   const [generatedCode, setGeneratedCode] = useState("")
+  const [loading, setLoading] = useState(false)
 
   // Phone settings (Optional, verification disabled in favor of TOTP)
 

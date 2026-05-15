@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Trophy, Star, Shield, Zap, Lock, Sparkles, Target, Activity, Users, Flame, ChevronRight } from "lucide-react"
+import { Trophy, Lock, Flame } from "lucide-react"
 import { getUser, getExpenses, getCategories, getBudgets, getGoals, getSocialPosts, getSocialComments } from "@/lib/store"
 import { computeAchievements } from "@/lib/engines/achievement-engine"
 import type { AchievementResult, Achievement } from "@/lib/types"

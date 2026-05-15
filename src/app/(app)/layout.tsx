@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Flame, LayoutDashboard, Receipt, PieChart, Lightbulb,
-  Target, Settings, LogOut, Menu, X, Bell, Sun, Moon, ShieldAlert, FileBarChart, Users,
+  Target, Settings, LogOut, Menu, X, Bell, Sun, Moon, ShieldAlert, FileBarChart,
   ChevronLeft, ChevronRight, MessageCircle, Crown, Trophy
 } from "lucide-react"
 import { getUser, getNotifications, markAllNotificationsRead, ensureStoreInitialized, isStoreInitialized, subscribe } from "@/lib/store"
@@ -406,7 +406,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
       {/* ─── Verification Required Overlay ─── */}
       <AnimatePresence>
-        {clerkLoaded && clerkUser && !clerkUser.primaryEmailAddress?.verification.status.includes("verified") && (
+        {clerkLoaded && clerkUser && !clerkUser.primaryEmailAddress?.verification?.status?.includes("verified") && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xl flex items-center justify-center p-6"
@@ -430,7 +430,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
                 <button onClick={() => window.location.reload()}
                   className="text-[13px] text-[var(--color-muted-foreground)] hover:text-orange-400 transition-colors font-medium">
-                  I've verified, reload the page
+                  I&apos;ve verified, reload the page
                 </button>
               </div>
               

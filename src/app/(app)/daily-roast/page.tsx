@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Flame, Share2, RefreshCw,
   MessageCircle, Clipboard, Check, Sparkles, TrendingDown,
   DollarSign, ExternalLink, Heart, Clock
 } from "lucide-react"
-import { getCategories, getBudgets, getGoals } from "@/lib/store"
+import { getCategories, getBudgets } from "@/lib/store"
 import { calculateDisciplineScore } from "@/lib/engines/discipline-score"
 import { getMonthDays } from "@/lib/utils"
 import { getUser, getExpenses } from "@/lib/store"

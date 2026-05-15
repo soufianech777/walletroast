@@ -3,10 +3,15 @@
 import Link from "next/link"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Flame, Lock, Eye, EyeOff, CheckCircle, ShieldCheck } from "lucide-react"
+import { Flame, Lock, Eye, EyeOff, CheckCircle, ShieldCheck, Mail, AlertCircle } from "lucide-react"
+import { useSignIn } from "@clerk/nextjs/legacy"
+import { useRouter } from "next/navigation"
 
 export default function ResetPasswordPage() {
+  const { isLoaded, signIn, setActive } = useSignIn()
+  const router = useRouter()
 
+  const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -19,24 +24,43 @@ export default function ResetPasswordPage() {
   const strengthColors = ["", "bg-red-500", "bg-amber-500", "bg-emerald-500"]
   const strengthLabels = ["", "Weak", "Good", "Strong"]
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isLoaded || !signIn) return
     setError("")
 
     if (password !== confirmPassword) {
       setError("Passwords do not match")
       return
     }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters")
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters")
+      return
+    }
+    if (code.length !== 6) {
+      setError("Please enter the 6-digit code")
       return
     }
 
     setLoading(true)
-    setTimeout(() => {
+    try {
+      const result = await signIn.attemptFirstFactor({
+        strategy: "reset_password_email_code",
+        code,
+        password,
+      })
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId })
+        setSuccess(true)
+      } else {
+        setError("Password reset failed. Please try again.")
+      }
+    } catch (err: any) {
+      setError(err?.errors?.[0]?.message || "Invalid code or password.")
+    } finally {
       setLoading(false)
-      setSuccess(true)
-    }, 1500)
+    }
   }
 
   return (
@@ -73,6 +97,23 @@ export default function ResetPasswordPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Verification Code */}
+                  <div>
+                    <label className="block text-[12px] text-[var(--color-muted-foreground)] mb-2 font-semibold uppercase tracking-[0.05em]">
+                      Reset Code
+                    </label>
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-muted-foreground)] group-focus-within:text-orange-400 transition-colors" />
+                      <input
+                        type="text" value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        placeholder="6-digit code"
+                        className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-[var(--color-secondary)] border border-[var(--color-border)] text-[14px] placeholder:text-[var(--color-muted-foreground)]/50 focus:outline-none focus:border-orange-500/40 focus:ring-2 focus:ring-orange-500/10 transition-all"
+                        required minLength={6} maxLength={6}
+                      />
+                    </div>
+                  </div>
+
                   {/* New Password */}
                   <div>
                     <label className="block text-[12px] text-[var(--color-muted-foreground)] mb-2 font-semibold uppercase tracking-[0.05em]">
@@ -83,9 +124,9 @@ export default function ResetPasswordPage() {
                       <input
                         type={showPassword ? "text" : "password"} value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Min. 6 characters"
+                        placeholder="Min. 8 characters"
                         className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-[var(--color-secondary)] border border-[var(--color-border)] text-[14px] placeholder:text-[var(--color-muted-foreground)]/50 focus:outline-none focus:border-orange-500/40 focus:ring-2 focus:ring-orange-500/10 transition-all"
-                        required minLength={6}
+                        required minLength={8}
                       />
                       <button type="button" onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors">
@@ -124,7 +165,7 @@ export default function ResetPasswordPage() {
                             ? "border-emerald-500/40 focus:border-emerald-500/40 focus:ring-emerald-500/10"
                             : "border-[var(--color-border)] focus:border-orange-500/40 focus:ring-orange-500/10"
                         }`}
-                        required minLength={6}
+                        required minLength={8}
                       />
                       <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors">
@@ -142,12 +183,13 @@ export default function ResetPasswordPage() {
                   </div>
 
                   {error && (
-                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-[12px] text-red-400 font-medium">
-                      {error}
+                    <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-2.5 text-[12px] text-red-400 font-medium">
+                      <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                      <p className="leading-relaxed">{error}</p>
                     </div>
                   )}
 
-                  <button type="submit" disabled={loading || password.length < 6 || password !== confirmPassword}
+                  <button type="submit" disabled={loading || password.length < 8 || password !== confirmPassword || code.length < 6}
                     className="w-full py-3.5 btn-primary rounded-xl text-[14px] font-bold disabled:opacity-50 flex items-center justify-center gap-2">
                     {loading ? (
                       <span className="flex items-center gap-2">
@@ -173,9 +215,9 @@ export default function ResetPasswordPage() {
                   <p className="text-[13px] text-[var(--color-muted-foreground)] leading-relaxed mb-7">
                     Your password has been successfully updated. You can now sign in with your new password.
                   </p>
-                  <Link href="/login"
+                  <Link href="/dashboard"
                     className="block w-full py-3.5 btn-primary rounded-xl text-[14px] font-bold text-center">
-                    Sign In Now
+                    Go to Dashboard
                   </Link>
                 </div>
               </motion.div>

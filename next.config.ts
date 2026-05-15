@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   ...(isStaticExport ? { output: "export" } : {}),
 
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // ─── SEO & Performance Headers ───

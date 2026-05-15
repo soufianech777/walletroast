@@ -98,7 +98,7 @@ export const VerificationEmail: React.FC<VerificationEmailProps> = ({ code }) =>
         
         <div style={roastBoxStyle}>
           <p style={roastTextStyle}>
-            "Verify your account before you spend another $40 on 'emergency' Uber Eats."
+            &quot;Verify your account before you spend another $40 on &apos;emergency&apos; Uber Eats.&quot;
           </p>
         </div>
         
@@ -111,7 +111,7 @@ export const VerificationEmail: React.FC<VerificationEmailProps> = ({ code }) =>
         </div>
         
         <p style={securityStyle}>
-          This code expires in 10 minutes. If you didn't request this, just ignore it—though we recommend checking your pulse if you've forgotten your own app.
+          This code expires in 10 minutes. If you didn&apos;t request this, just ignore it&mdash;though we recommend checking your pulse if you&apos;ve forgotten your own app.
         </p>
       </div>
       

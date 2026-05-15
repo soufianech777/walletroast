@@ -2,8 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
-import { User, Category, Budget, Expense, Goal, Notification, RoastCard, SocialComment, SocialProfile } from "./types";
-import { generateId } from "./utils";
+import { User, Category, Expense, Goal, RoastCard, SocialComment, SocialProfile } from "./types";
 import { DEFAULT_CATEGORIES } from "./types";
 
 export async function getUser(): Promise<User | null> {
@@ -121,6 +120,11 @@ export async function updateBudget(categoryId: string, monthlyLimit: number) {
     const user = await getUser();
     if (!user) return null;
 
+    if (isNaN(monthlyLimit) || monthlyLimit < 0) return null;
+
+    const category = await prisma.category.findFirst({ where: { id: categoryId, userId: user.id } });
+    if (!category) return null;
+
     const existing = await prisma.budget.findFirst({
         where: { userId: user.id, categoryId }
     });
@@ -150,6 +154,12 @@ export async function getExpenses() {
 export async function addExpense(data: Omit<Expense, "id" | "userId" | "category">) {
     const user = await getUser();
     if (!user) throw new Error("Unauthorized");
+
+    if (isNaN(data.amount) || data.amount < 0) throw new Error("Invalid amount");
+    if (data.note && data.note.length > 500) throw new Error("Note too long");
+
+    const category = await prisma.category.findFirst({ where: { id: data.categoryId, userId: user.id } });
+    if (!category) throw new Error("Unauthorized category access");
     return prisma.expense.create({
         data: {
             userId: user.id,
@@ -166,7 +176,7 @@ export async function addExpense(data: Omit<Expense, "id" | "userId" | "category
 export async function deleteExpense(id: string) {
     const user = await getUser();
     if (!user) return;
-    await prisma.expense.delete({ where: { id, userId: user.id } });
+    await prisma.expense.deleteMany({ where: { id, userId: user.id } });
 }
 
 export async function getGoals() {
@@ -178,6 +188,10 @@ export async function getGoals() {
 export async function addGoal(data: Omit<Goal, "id" | "userId">) {
     const user = await getUser();
     if (!user) throw new Error("Unauthorized");
+
+    if (isNaN(data.targetAmount) || data.targetAmount < 0) throw new Error("Invalid target amount");
+    if (isNaN(data.savedAmount) || data.savedAmount < 0) throw new Error("Invalid saved amount");
+    if (!data.title || data.title.length > 100) throw new Error("Title too long");
     return prisma.goal.create({
         data: {
             userId: user.id,
@@ -192,7 +206,7 @@ export async function addGoal(data: Omit<Goal, "id" | "userId">) {
 export async function deleteGoal(id: string) {
     const user = await getUser();
     if (!user) return;
-    await prisma.goal.delete({ where: { id, userId: user.id } });
+    await prisma.goal.deleteMany({ where: { id, userId: user.id } });
 }
 
 export async function getSocialPosts() {
@@ -205,6 +219,11 @@ export async function getSocialPosts() {
 export async function addSocialPost(data: Omit<RoastCard, "id" | "userId" | "createdAt" | "reactions" | "reactionsJson" | "shareCount">) {
     const user = await getUser();
     if (!user) throw new Error("Unauthorized");
+
+    if (data.roastMessage && data.roastMessage.length > 1000) throw new Error("Message too long");
+    if (isNaN(data.disciplineScore) || data.disciplineScore < 0 || data.disciplineScore > 100) throw new Error("Invalid score");
+    if (isNaN(data.wastedAmount) || data.wastedAmount < 0) throw new Error("Invalid amount");
+    if (isNaN(data.streak) || data.streak < 0) throw new Error("Invalid streak");
     return prisma.roastCard.create({
         data: {
             userId: user.id,
@@ -232,7 +251,7 @@ export async function toggleReaction(postId: string, emoji: string) {
 
     let reactions: Record<string, string[]> = {};
     if (post.reactionsJson) {
-        try { reactions = JSON.parse(post.reactionsJson); } catch (e) { }
+        try { reactions = JSON.parse(post.reactionsJson); } catch { }
     }
 
     if (!reactions[emoji]) reactions[emoji] = [];
@@ -273,6 +292,8 @@ export async function getSocialComments(postId?: string) {
 export async function addSocialComment(data: Omit<SocialComment, "id" | "createdAt" | "reactions" | "reactionsJson">) {
     const user = await getUser();
     if (!user) throw new Error("Unauthorized");
+
+    if (!data.text || data.text.length > 500) throw new Error("Comment text invalid");
     return prisma.socialComment.create({
         data: {
             postId: data.postId,
@@ -295,26 +316,26 @@ export async function saveSocialProfile(data: Partial<SocialProfile>) {
     const user = await getUser();
     if (!user) throw new Error("Unauthorized");
 
+    const safeDisplayName = data.displayName?.slice(0, 50) || user.name;
+    const safeBio = data.bio?.slice(0, 200) || "";
+    const safeAvatar = typeof data.avatarGradient === 'number' ? data.avatarGradient : 0;
+
     return prisma.socialProfile.upsert({
         where: { userId: user.id },
         create: {
             userId: user.id,
-            displayName: data.displayName || user.name,
-            bio: data.bio || "",
-            avatarGradient: data.avatarGradient || 0,
-            score: data.score || 0,
-            streak: data.streak || 0,
-            postCount: data.postCount || 0,
-            badgesJson: JSON.stringify(data.badges || []),
+            displayName: safeDisplayName,
+            bio: safeBio,
+            avatarGradient: safeAvatar,
+            score: 0,
+            streak: 0,
+            postCount: 0,
+            badgesJson: "[]",
         },
         update: {
-            displayName: data.displayName,
-            bio: data.bio,
-            avatarGradient: data.avatarGradient,
-            score: data.score,
-            streak: data.streak,
-            postCount: data.postCount,
-            badgesJson: data.badges ? JSON.stringify(data.badges) : undefined,
+            displayName: safeDisplayName,
+            bio: safeBio,
+            avatarGradient: safeAvatar,
         }
     });
 }

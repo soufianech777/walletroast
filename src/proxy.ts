@@ -192,11 +192,11 @@ function isIPBanned(ip: string): boolean {
 function applySecurityHeaders(response: NextResponse, isAuth: boolean = false) {
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+    "script-src 'self' 'unsafe-inline' blob: https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
     "worker-src 'self' blob:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https: http:",
+    "img-src 'self' data: blob: https:",
     "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://*.clerk.accounts.dev https://api.clerk.dev https://*.clerk.com",
     "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com https://accounts.google.com",
     "frame-ancestors 'none'",
@@ -205,16 +205,11 @@ function applySecurityHeaders(response: NextResponse, isAuth: boolean = false) {
     "upgrade-insecure-requests",
   ].join("; ")
 
-  // Auth pages (login/register/sso-callback) need full Clerk JS — skip CSP for them
+  // Auth pages (login/register/sso-callback) need full Clerk JS — we keep standard CSP but allow necessary Clerk domains
   if (isAuth) {
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private")
     response.headers.set("Pragma", "no-cache")
     response.headers.set("Expires", "0")
-    // Only basic security headers, no CSP
-    response.headers.set("X-Content-Type-Options", "nosniff")
-    response.headers.set("X-Frame-Options", "DENY")
-    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
-    return response
   }
 
   response.headers.set("Content-Security-Policy", csp)

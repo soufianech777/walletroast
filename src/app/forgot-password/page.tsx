@@ -3,21 +3,35 @@
 import Link from "next/link"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Flame, Mail, ArrowLeft, CheckCircle, Send } from "lucide-react"
+import { Flame, Mail, ArrowLeft, CheckCircle, Send, AlertCircle } from "lucide-react"
+import { useSignIn } from "@clerk/nextjs/legacy"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { isLoaded, signIn } = useSignIn()
+  const [error, setError] = useState("")
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isLoaded || !signIn) return
+
     setLoading(true)
-    // Simulate sending reset email
-    setTimeout(() => {
-      setLoading(false)
+    setError("")
+
+    try {
+      await signIn.create({
+        strategy: "reset_password_email_code",
+        identifier: email,
+      })
       setSent(true)
-    }, 1500)
+    } catch (err: any) {
+      setError(err?.errors?.[0]?.message || "Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -55,6 +69,12 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  {error && (
+                    <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-2.5">
+                      <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                      <p className="text-[13px] text-red-400 leading-relaxed">{error}</p>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-[12px] text-[var(--color-muted-foreground)] mb-2 font-semibold uppercase tracking-[0.05em]">
                       Email Address
@@ -110,10 +130,9 @@ export default function ForgotPasswordPage() {
                     </p>
                   </div>
 
-                  {/* Demo: direct link to reset page */}
                   <Link href="/reset-password"
                     className="block w-full py-3 btn-primary rounded-xl text-[13px] font-bold text-center">
-                    Open Reset Page (Demo)
+                    Enter Reset Code
                   </Link>
                 </div>
               </motion.div>
