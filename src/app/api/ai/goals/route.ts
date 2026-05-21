@@ -5,7 +5,7 @@ import { validateRequest, apiError } from "@/lib/api-security"
 import { z } from "zod"
 
 const goalSummarySchema = z.object({
-  title: z.string().max(100),
+  title: z.string().max(500),
   targetAmount: z.number().min(0),
   savedAmount: z.number().min(0),
   deadline: z.string(),

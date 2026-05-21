@@ -191,7 +191,7 @@ export async function addGoal(data: Omit<Goal, "id" | "userId">) {
 
     if (isNaN(data.targetAmount) || data.targetAmount < 0) throw new Error("Invalid target amount");
     if (isNaN(data.savedAmount) || data.savedAmount < 0) throw new Error("Invalid saved amount");
-    if (!data.title || data.title.length > 100) throw new Error("Title too long");
+    if (!data.title || data.title.length > 500) throw new Error("Title too long");
     return prisma.goal.create({
         data: {
             userId: user.id,

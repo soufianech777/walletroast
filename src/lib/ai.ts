@@ -141,14 +141,38 @@ Analyze:`
 // ═══════════════════════════════════════════════════════
 
 export async function generateAIGoalAdvice(goal: GoalSummary): Promise<string | null> {
+  let displayTitle = goal.title
+  let difficulty = "normal"
+  let roastStyle = "co-pilot"
+  let goalIcon = "🎯"
+
+  if (goal.title.startsWith("{")) {
+    try {
+      const meta = JSON.parse(goal.title)
+      displayTitle = meta.name || goal.title
+      difficulty = meta.difficulty || "normal"
+      roastStyle = meta.style || "co-pilot"
+      goalIcon = meta.icon || "🎯"
+    } catch {
+      // fallback
+    }
+  }
+
   const progress = goal.targetAmount > 0 ? ((goal.savedAmount / goal.targetAmount) * 100).toFixed(0) : "0"
   const remaining = goal.targetAmount - goal.savedAmount
   const monthlyNeeded = goal.daysLeft > 0 ? (remaining / (goal.daysLeft / 30)).toFixed(0) : "N/A"
 
-  const prompt = `You are WalletRoast's AI goal coach. Give a short, motivating tip for reaching a savings goal.
+  const toneGuide = {
+    soft: "Be encouraging, gentle, and positive. Highlight progress and give warm tips.",
+    "co-pilot": "Be a helpful accountability partner. Give realistic, direct advice.",
+    brutal: "Be savage, sarcastic, and funny. Roast them if they're behind or progress is slow, using creative metaphors.",
+  }
+  const tone = toneGuide[roastStyle as keyof typeof toneGuide] || toneGuide["co-pilot"]
+
+  const prompt = `You are WalletRoast's AI goal coach. Give a short tip or roast for reaching a savings goal.
 
 GOAL DATA:
-- Goal: "${goal.title}"
+- Goal: "${goalIcon} ${displayTitle}"
 - Target: $${goal.targetAmount.toFixed(0)}
 - Saved so far: $${goal.savedAmount.toFixed(0)} (${progress}%)
 - Remaining: $${remaining.toFixed(0)}
@@ -156,12 +180,14 @@ GOAL DATA:
 - Monthly savings needed: $${monthlyNeeded}
 - Monthly income: $${goal.monthlyIncome.toFixed(0)}
 - Monthly spending: $${goal.totalSpent.toFixed(0)}
+- Difficulty Challenge: ${difficulty} (hard means higher stakes and higher pressure)
+- Roast Coaching Tone: ${tone}
 
 RULES:
 1. Give ONE short paragraph (2 sentences max)
 2. Be specific with numbers — tell them exactly how much to save per week/day
 3. Suggest one concrete cut they could make
-4. Be encouraging but realistic
+4. Maintain the requested coaching tone: ${tone}
 5. Do NOT use markdown
 
 Advise:`
