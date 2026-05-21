@@ -5,11 +5,9 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Flame, Lock, Eye, EyeOff, CheckCircle, ShieldCheck, Mail, AlertCircle } from "lucide-react"
 import { useSignIn } from "@clerk/nextjs/legacy"
-import { useRouter } from "next/navigation"
 
 export default function ResetPasswordPage() {
   const { isLoaded, signIn, setActive } = useSignIn()
-  const router = useRouter()
 
   const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
@@ -56,8 +54,9 @@ export default function ResetPasswordPage() {
       } else {
         setError("Password reset failed. Please try again.")
       }
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.message || "Invalid code or password.")
+    } catch (err) {
+      const errorResponse = err as { errors?: { message: string }[] }
+      setError(errorResponse?.errors?.[0]?.message || "Invalid code or password.")
     } finally {
       setLoading(false)
     }

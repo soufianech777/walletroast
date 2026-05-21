@@ -538,9 +538,18 @@ export default function SettingsPage() {
                     <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); if (e.target.value !== originalEmail) setEmailVerified(false) }}
                       className={`flex-1 input-premium ${!emailVerified && email !== originalEmail ? '!border-orange-500/40' : ''}`} placeholder="you@example.com" />
                     {!emailVerified && email && email !== originalEmail && (
-                      <button onClick={handleSendEmailCode}
-                        className="btn-primary px-4 py-2 rounded-xl text-[12px] font-semibold whitespace-nowrap flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5" /> Verify
+                      <button onClick={handleSendEmailCode} disabled={loading}
+                        className="btn-primary px-4 py-2 rounded-xl text-[12px] font-semibold whitespace-nowrap flex items-center gap-1.5 disabled:opacity-50">
+                        {loading ? (
+                          <>
+                            <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-3.5 h-3.5" /> Verify
+                          </>
+                        )}
                       </button>
                     )}
                   </div>

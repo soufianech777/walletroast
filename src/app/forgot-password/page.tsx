@@ -27,8 +27,9 @@ export default function ForgotPasswordPage() {
         identifier: email,
       })
       setSent(true)
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.message || "Something went wrong. Please try again.")
+    } catch (err) {
+      const errorResponse = err as { errors?: { message: string }[] }
+      setError(errorResponse?.errors?.[0]?.message || "Something went wrong. Please try again.")
     } finally {
       setLoading(false)
     }
